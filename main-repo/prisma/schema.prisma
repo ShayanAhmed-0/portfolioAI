@@ -1,0 +1,108 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Auth {
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  password           String
+  is_profile_completed Boolean        @default(false)
+  salt               String
+  user_profile        UserProfile?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now()) @updatedAt
+  isDeleted          Boolean        @default(false)
+
+  @@map("auth")
+}
+
+model UserProfile {
+  id                  String               @id @default(uuid())
+  auth                Auth                 @relation(fields: [auth_id], references: [id])
+  auth_id              String               @unique
+  user_name           String
+  avatar              Media?
+  longitude           Float?
+  latitude            Float?
+  age                 Int
+  // phone               String               @unique
+  gender              String
+  skills  Skills[]
+  allowNotifications  Boolean              @default(true)
+  Notification        Notification[]
+  device              Device[]
+  reviews Reviews[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
+  
+  @@map("user_profile")
+}
+
+model Skills{
+  id                  String               @id @default(uuid())
+  user_profile                UserProfile                 @relation(fields: [user_profile_id], references: [id])
+  user_profile_id              String               @unique
+  name  String
+  level Int @default(0)
+
+
+  @@map("skills")
+}
+
+
+model Media {
+  id                String           @id @default(uuid())
+  name              String
+  url               String
+  // type          MediaType // Enum to distinguish between different types of media
+  user_profile       UserProfile?     @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
+  user_profile_id     String?          @unique
+  reviews Reviews[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  @@map("media")
+}
+
+model Reviews {
+  id              String        @id @default(uuid())
+  user_profile       UserProfile?     @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
+  user_profile_id     String?          @unique
+  review          String
+  rating          Int
+  images          Media[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+
+  @@map("reviews")
+}
+model Device {
+  id                String           @id @default(uuid())
+  deviceType        String
+  deviceToken       String
+  isLoggedIn        Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+ user_profile UserProfile?     @relation(fields: [user_profile_id], references: [id])
+user_profile_id       String?
+ 
+}
+
+model Notification {
+  id              String         @id @default(uuid())
+  is_read          Boolean        @default(false)
+  title           String
+  description     String
+  user_profile     UserProfile?   @relation(fields: [user_profile_id], references: [id])
+  user_profile_id   String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("notification")
+}
