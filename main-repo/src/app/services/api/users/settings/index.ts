@@ -6,16 +6,16 @@ import {
 } from "fastify";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
 import user_auth_bearer from "../../../../middlewares/bearer-token/user-auth-bearer";
-import { handle_multipart } from "../../../../middlewares/multipart/handle-multipart";
+// import { handle_multipart } from "../../../../middlewares/multipart/handle-multipart";
 import { avatar_multipart } from "../../../../middlewares/multipart/avatar-multipart";
 import user_bearer from "../../../../middlewares/bearer-token/user-bearer";
 import CustomError from "../../../../../utils/custom-response/custom-error";
 import {
-  addCard,
+  // addCard,
   allowNotifications,
   change_password,
   deleteAccount,
-  myCards,
+  // myCards,
 } from "./handler";
 // import formBody from "fastify-formbody";
 
@@ -141,58 +141,58 @@ const user_setting = async (fastify: FastifyInstance) => {
         .send({ message: error.message, status: error.statusCode });
     },
   });
-  fastify.route({
-    method: "GET",
-    url: "/my-cards",
-    schema: {
-      headers: authheaders,
-    },
-    handler: myCards,
-    preValidation: user_bearer,
-    errorHandler: (
-      error: FastifyError,
-      req: FastifyRequest,
-      reply: FastifyReply
-    ) => {
-      return reply
-        .status(error.statusCode!)
-        .send({ message: error.message, status: error.statusCode });
-    },
-  });
-  fastify.route({
-    method: "POST",
-    url: "/add-card",
-    schema: {
-      headers: authheaders,
-      body: {
-        type: "object",
-        properties: {
-          cardNumber: { type: "string" },
-          name: { type: "string" },
-          expiryDate: { type: "string" },
-          CVV: { type: "string" },
-        },
-        required: ["cardNumber", "name", "expiryDate", "CVV"],
-      },
-      response: {
-        200: otherRes,
-        400: otherRes,
-        409: otherRes,
-        500: otherRes,
-      },
-    },
-    handler: addCard,
-    preValidation: user_bearer,
-    errorHandler: (
-      error: FastifyError,
-      req: FastifyRequest,
-      reply: FastifyReply
-    ) => {
-      return reply
-        .status(error.statusCode!)
-        .send({ message: error.message, status: error.statusCode });
-    },
-  });
+  // fastify.route({
+  //   method: "GET",
+  //   url: "/my-cards",
+  //   schema: {
+  //     headers: authheaders,
+  //   },
+  //   handler: myCards,
+  //   preValidation: user_bearer,
+  //   errorHandler: (
+  //     error: FastifyError,
+  //     req: FastifyRequest,
+  //     reply: FastifyReply
+  //   ) => {
+  //     return reply
+  //       .status(error.statusCode!)
+  //       .send({ message: error.message, status: error.statusCode });
+  //   },
+  // });
+  // fastify.route({
+  //   method: "POST",
+  //   url: "/add-card",
+  //   schema: {
+  //     headers: authheaders,
+  //     body: {
+  //       type: "object",
+  //       properties: {
+  //         cardNumber: { type: "string" },
+  //         name: { type: "string" },
+  //         expiryDate: { type: "string" },
+  //         CVV: { type: "string" },
+  //       },
+  //       required: ["cardNumber", "name", "expiryDate", "CVV"],
+  //     },
+  //     response: {
+  //       200: otherRes,
+  //       400: otherRes,
+  //       409: otherRes,
+  //       500: otherRes,
+  //     },
+  //   },
+  //   handler: addCard,
+  //   preValidation: user_bearer,
+  //   errorHandler: (
+  //     error: FastifyError,
+  //     req: FastifyRequest,
+  //     reply: FastifyReply
+  //   ) => {
+  //     return reply
+  //       .status(error.statusCode!)
+  //       .send({ message: error.message, status: error.statusCode });
+  //   },
+  // });
 };
 
 export default user_setting;

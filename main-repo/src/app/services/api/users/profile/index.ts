@@ -6,11 +6,11 @@ import {
 } from "fastify";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
 import user_auth_bearer from "../../../../middlewares/bearer-token/user-auth-bearer";
-import { handle_multipart } from "../../../../middlewares/multipart/handle-multipart";
+// import { handle_multipart } from "../../../../middlewares/multipart/handle-multipart";
 import { avatar_multipart } from "../../../../middlewares/multipart/avatar-multipart";
 import user_bearer from "../../../../middlewares/bearer-token/user-bearer";
 import CustomError from "../../../../../utils/custom-response/custom-error";
-import { edit_user_profile, get_profile } from "./handler";
+import {  get_profile } from "./handler";
 // import formBody from "fastify-formbody";
 
 const upload = multer({ dest: "uploads/" });
@@ -110,60 +110,60 @@ const user_profile = async (fastify: FastifyInstance) => {
   });
 
   // create-profile;
-  fastify.route({
-    method: "PATCH",
-    url: "/edit-profile",
-    schema: {
-      headers: authheaders,
-      // response: {
-      //   // 201: {
-      //   //   type: "object",
-      //   //   properties: {
-      //   //     data: {
-      //   //       type: "object",
-      //   //       properties: {
-      //   //         id: { type: "string" },
-      //   //         first_name: { type: "string" },
-      //   //         last_name: { type: "string" },
-      //   //         phone: { type: "string" },
-      //   //         gender: { type: "string" },
-      //   //         age: { type: "number" },
-      //   //       },
-      //   //       required: [
-      //   //         "id",
-      //   //         "first_name",
-      //   //         "last_name",
-      //   //         "phone",
-      //   //         "gender",
-      //   //         "age",
-      //   //       ],
-      //   //     },
-      //   //     message: { type: "string" },
-      //   //     status: { type: "number" },
-      //   //     token: { type: "string" },
-      //   //   },
-      //   //   required: ["data", "message", "status", "token"],
-      //   // },
-      //   400: otherRes,
-      //   404: otherRes,
-      //   409: otherRes,
-      //   500: otherRes,
-      // },
-    },
-    preHandler: avatar_multipart.single("avatar"), // Handling file upload
-    preValidation: user_bearer,
-    handler: edit_user_profile,
-    errorHandler: (
-      error: FastifyError,
-      req: FastifyRequest,
-      reply: FastifyReply
-    ) => {
-      console.log(error);
-      return reply
-        .status(error.statusCode!)
-        .send({ message: error.message, status: error.statusCode });
-    },
-  });
+  // fastify.route({
+  //   method: "PATCH",
+  //   url: "/edit-profile",
+  //   schema: {
+  //     headers: authheaders,
+  //     // response: {
+  //     //   // 201: {
+  //     //   //   type: "object",
+  //     //   //   properties: {
+  //     //   //     data: {
+  //     //   //       type: "object",
+  //     //   //       properties: {
+  //     //   //         id: { type: "string" },
+  //     //   //         first_name: { type: "string" },
+  //     //   //         last_name: { type: "string" },
+  //     //   //         phone: { type: "string" },
+  //     //   //         gender: { type: "string" },
+  //     //   //         age: { type: "number" },
+  //     //   //       },
+  //     //   //       required: [
+  //     //   //         "id",
+  //     //   //         "first_name",
+  //     //   //         "last_name",
+  //     //   //         "phone",
+  //     //   //         "gender",
+  //     //   //         "age",
+  //     //   //       ],
+  //     //   //     },
+  //     //   //     message: { type: "string" },
+  //     //   //     status: { type: "number" },
+  //     //   //     token: { type: "string" },
+  //     //   //   },
+  //     //   //   required: ["data", "message", "status", "token"],
+  //     //   // },
+  //     //   400: otherRes,
+  //     //   404: otherRes,
+  //     //   409: otherRes,
+  //     //   500: otherRes,
+  //     // },
+  //   },
+  //   preHandler: avatar_multipart.single("avatar"), // Handling file upload
+  //   preValidation: user_bearer,
+  //   handler: edit_user_profile,
+  //   errorHandler: (
+  //     error: FastifyError,
+  //     req: FastifyRequest,
+  //     reply: FastifyReply
+  //   ) => {
+  //     console.log(error);
+  //     return reply
+  //       .status(error.statusCode!)
+  //       .send({ message: error.message, status: error.statusCode });
+  //   },
+  // });
 };
 
 export default user_profile;

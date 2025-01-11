@@ -18,7 +18,7 @@ import {
   resend_forgot_password_otp,
   change_password,
   delete_account,
-  logout,
+  // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
 import { avatar_multipart } from "../../../../middlewares/multipart/avatar-multipart";
@@ -556,37 +556,37 @@ const user_auth = async (fastify: FastifyInstance) => {
   });
 
   //Logout
-  fastify.route({
-    method: "PATCH",
-    url: "/logout",
-    schema: {
-      headers: authheaders,
-      body: {
-        type: "object",
-        properties: {
-          deviceToken: { type: "string" },
-        },
-        required: ["deviceToken"],
-      },
-      response: {
-        200: otherRes,
-        404: otherRes,
-        409: otherRes,
-        500: otherRes,
-      },
-    },
-    handler: logout,
-    preValidation: user_bearer,
-    errorHandler: (
-      error: FastifyError,
-      req: FastifyRequest,
-      reply: FastifyReply
-    ) => {
-      return reply
-        .status(error.statusCode!)
-        .send({ message: error.message, status: error.statusCode });
-    },
-  });
+  // fastify.route({
+  //   method: "PATCH",
+  //   url: "/logout",
+  //   schema: {
+  //     headers: authheaders,
+  //     body: {
+  //       type: "object",
+  //       properties: {
+  //         deviceToken: { type: "string" },
+  //       },
+  //       required: ["deviceToken"],
+  //     },
+  //     response: {
+  //       200: otherRes,
+  //       404: otherRes,
+  //       409: otherRes,
+  //       500: otherRes,
+  //     },
+  //   },
+  //   handler: logout,
+  //   preValidation: user_bearer,
+  //   errorHandler: (
+  //     error: FastifyError,
+  //     req: FastifyRequest,
+  //     reply: FastifyReply
+  //   ) => {
+  //     return reply
+  //       .status(error.statusCode!)
+  //       .send({ message: error.message, status: error.statusCode });
+  //   },
+  // });
 };
 
 export default user_auth;

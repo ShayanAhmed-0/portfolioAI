@@ -25,10 +25,10 @@ export const signup = async (req: FastifyRequest, reply: FastifyReply) => {
 
     const checkExistingUser = await AuthService.checkExistingUser(email);
     if (checkExistingUser) {
-      if (checkExistingUser.isProfileCompleted) {
+      if (checkExistingUser.is_profile_completed) {
         throw new CustomError("User already exist", 409);
       }
-      if (!checkExistingUser.isProfileCompleted) {
+      if (!checkExistingUser.is_profile_completed) {
         throw new CustomError(
           "User already exist Login To Create Your Profile",
           409
@@ -100,7 +100,6 @@ export const signup_otp = async (req: FastifyRequest, reply: FastifyReply) => {
     const user = await AuthService.createUser(
       req.user.email,
       req.user.password,
-      "USER"
     );
     return reply
       .status(200)
@@ -183,16 +182,16 @@ export const create_user_profile = async (
       username,
       about,
       age,
+      phone,
+      gender,
       skills,
-      deviceToken,
-      deviceType,
     } = req.body as {
       username:string
 about:string
 age:number|string
+phone: number|string
+gender: "Male" | "Female" | "Other",
 skills:string[]
-deviceToken:string
-deviceType:string
     };
 
     const { email, id } = req.user as { email: string; id: string };
@@ -209,6 +208,10 @@ deviceType:string
     if (checkProfile) {
       throw new CustomError("Profile Already Exist Try Logging in", 409);
     }
+    const checkPhone = await UserService.checkExistingPhone(phone.toString());
+    if (checkProfile) {
+      throw new CustomError("Profile Already Exist Try Logging in", 409);
+    }
 
     const ExistingUser = await AuthService.checkExistingUser(email);
     if (!ExistingUser) {
@@ -222,9 +225,9 @@ deviceType:string
       username,
       about,
       parseInt(age.toString()),
+      phone.toString(),
+      gender,
       skills,
-      deviceToken,
-      deviceType,
     );
     if (!createUserProfile)
       throw new CustomError("invalid cuisineTypes or dietaryRestrictions", 400);
@@ -250,13 +253,13 @@ deviceType:string
       { email, profileId, authId },
       validatedEnv.USER_JWT_SECRET
     );
-    kafkarun(
-      fullUser!.id,
-      fullUser?.userProfile?.firstName!,
-      "user",
-      "new-user",
-      fullUser?.userProfile?.avatar?.url!
-    );
+    // kafkarun(
+    //   fullUser!.id,
+    //   fullUser?.userProfile?.firstName!,
+    //   "user",
+    //   "new-user",
+    //   fullUser?.userProfile?.avatar?.url!
+    // );
     return reply.status(200).send({
       status: 200,
       message: "User Profile Created Successfully",
@@ -298,11 +301,8 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
         message: "Email Not Found SignUp First",
       });
     }
-    if (Auth.role === "VENDOR") {
-      throw new CustomError("Account Registered as Vendor", 400);
-    }
     console.log(Auth.id);
-    if (!Auth.isProfileCompleted) {
+    if (!Auth.is_profile_completed) {
       const profileId = Auth.id;
       const token = generateJWT(
         { email, profileId },
@@ -310,7 +310,7 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
       );
       return reply.status(404).send({
         token,
-        data: { isProfileCompleted: Auth.isProfileCompleted },
+        data: { isProfileCompleted: Auth.is_profile_completed },
         status: 404,
         message: "Profile not Found Create Profile First",
       });
@@ -324,17 +324,17 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
     if (!fullUser) {
       throw new CustomError("error getting full user", 401);
     }
-    if (!fullUser.userProfile) {
+    if (!fullUser.user_profile) {
       throw new CustomError("error getting full user", 401);
     }
 
-    const profileId = fullUser.userProfile.id;
+    const profileId = fullUser.user_profile.id;
     const authId = fullUser.id;
     const token = generateJWT(
       { email, authId, profileId },
       validatedEnv.USER_JWT_SECRET
     );
-    const mydeviceToken = fullUser.userProfile.device.find(
+    const mydeviceToken = fullUser.user_profile.device.find(
       (d: any) => d.deviceToken === deviceToken
     );
     if (mydeviceToken) {
@@ -627,36 +627,36 @@ export const delete_account = async (
   }
 };
 
-export const logout = async (req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const { deviceToken } = req.body as {
-      deviceToken: string;
-    };
-    const { profileId } = req.user as {
-      profileId: string;
-    };
+// export const logout = async (req: FastifyRequest, reply: FastifyReply) => {
+//   try {
+//     const { deviceToken } = req.body as {
+//       deviceToken: string;
+//     };
+//     const { profileId } = req.user as {
+//       profileId: string;
+//     };
 
-    const logout = await AuthService.userLogout(profileId, deviceToken);
-    if (!logout) throw new CustomError("device to logout not found", 404);
+//     const logout = await AuthService.userLogout(profileId, deviceToken);
+//     if (!logout) throw new CustomError("device to logout not found", 404);
 
-    // const passwordChanged = await AuthService.changePassword(email, password);
-    return reply.status(200).send({
-      status: 200,
-      message: "Logged Out Successfully",
-    });
-  } catch (error: any) {
-    if (error instanceof CustomError) {
-      // Handle specific CustomError instances
-      return reply.status(error.status).send({
-        message: error.message,
-        status: error.status,
-      });
-    } else {
-      console.log(error);
-      return reply.status(500).send({
-        message: error.message,
-        status: 500,
-      });
-    }
-  }
-};
+//     // const passwordChanged = await AuthService.changePassword(email, password);
+//     return reply.status(200).send({
+//       status: 200,
+//       message: "Logged Out Successfully",
+//     });
+//   } catch (error: any) {
+//     if (error instanceof CustomError) {
+//       // Handle specific CustomError instances
+//       return reply.status(error.status).send({
+//         message: error.message,
+//         status: error.status,
+//       });
+//     } else {
+//       console.log(error);
+//       return reply.status(500).send({
+//         message: error.message,
+//         status: 500,
+//       });
+//     }
+//   }
+// };

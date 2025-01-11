@@ -7,7 +7,7 @@ import fastifyMultipart, { FastifyMultipartOptions } from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import formBodyPlugin from "@fastify/formbody";
 import { Server as SocketIO } from "socket.io";
-import my_socket from "./app/services/Chat";
+// import my_socket from "./app/services/Chat";
 import logger from "./logger/logger";
 import AppConfig from "./config/environmentVariables";
 import routes from "./app/routes";
@@ -29,13 +29,9 @@ export const init = async (config: typeof AppConfig) => {
     // Conditionally set up HTTPS based on the environment
     ...(config.ENVIRONMENT === "LIVE" && {
       https: {
-        key: fs.readFileSync(
-          "/home/portfolioai/ssl/keys/c0612_e32e3_456064bd57312c817d4356da58f0d9c2.key"
-        ),
-        cert: fs.readFileSync(
-          "/home/portfolioai/ssl/certs/streeteats_apis_thesuitchstaging2_com_c0612_e32e3_1728152003_ebd79b0db338e807fc64b4a06c056e43.crt"
-        ),
-        ca: fs.readFileSync("/home/portfolioai/ssl/certs/ca.crt"),
+        key: fs.readFileSync(config.KEY),
+        cert: fs.readFileSync(config.CRT),
+        ca: fs.readFileSync(config.CA),
       },
     }),
   });
@@ -94,16 +90,17 @@ export const run = async (app: any) => {
     }
   );
 };
-export const run_socket = async (app: any) => {
-  try {
-    console.log("Initializing socket.io...");
-    await my_socket(app);
-    console.log("Socket.io initialized successfully.");
-  } catch (err: any) {
-    app.log.error("Error initializing socket.io:", err);
-    return {
-      status: err.status || 500,
-      message: err.message || "Internal Server Error",
-    };
-  }
-};
+//  
+
+//   try {
+//     console.log("Initializing socket.io...");
+//     await my_socket(app);
+//     console.log("Socket.io initialized successfully.");
+//   } catch (err: any) {
+//     app.log.error("Error initializing socket.io:", err);
+//     return {
+//       status: err.status || 500,
+//       message: err.message || "Internal Server Error",
+//     };
+//   }
+// };

@@ -1,4 +1,4 @@
-import seeder from "./services/api/seeder";
+// import seeder from "./services/api/seeder";
 import user_auth from "./services/api/users/auth";
 import user_profile from "./services/api/users/profile";
 
@@ -8,7 +8,7 @@ export default async (fastify: any) => {
   fastify.register(user_profile, { prefix: `${apiPrefix}/user/profile` });
   
 
-  fastify.register(seeder, { prefix: "/Warn/seeder" });
+  // fastify.register(seeder, { prefix: "/Warn/seeder" });
   fastify.route({
     method: "GET",
     url: "/",

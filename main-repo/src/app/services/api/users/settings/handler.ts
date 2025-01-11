@@ -10,7 +10,7 @@ import MediaService from "../../../Media/media-service";
 import validatedEnv from "../../../../../config/environmentVariables";
 import { gethashedPass } from "../../../../../utils/generate-hash";
 import AuthService from "../../../Auth/auth-services";
-import CardService from "../../../Cards/card-service";
+// import CardService from "../../../Cards/card-service";
 
 // export const test = async(req: FastifyRequest, reply: FastifyReply)=>{
 //    try {
@@ -152,75 +152,75 @@ export const deleteAccount = async (
     }
   }
 };
-export const myCards = async (req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const { authId, profileId } = req.vendor as {
-      authId: string;
-      profileId: string;
-    };
+// export const myCards = async (req: FastifyRequest, reply: FastifyReply) => {
+//   try {
+//     const { authId, profileId } = req.vendor as {
+//       authId: string;
+//       profileId: string;
+//     };
 
-    const myCards = await CardService.getUserCards(profileId);
+//     const myCards = await CardService.getUserCards(profileId);
 
-    return reply.status(200).send({
-      data: myCards,
-      message: "Cards fetched",
-      status: 200,
-    });
-  } catch (error: any) {
-    if (error instanceof CustomError) {
-      // Handle specific CustomError instances
-      return reply.status(error.status).send({
-        message: error.message,
-        status: error.status,
-      });
-    } else {
-      console.log(error);
-      return reply.status(500).send({
-        message: error.message,
-        status: 500,
-      });
-    }
-  }
-};
-export const addCard = async (req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const { authId, profileId } = req.vendor as {
-      authId: string;
-      profileId: string;
-    };
-    const { cardNumber, name, expiryDate, CVV } = req.body as {
-      cardNumber: string;
-      name: string;
-      expiryDate: string;
-      CVV: string;
-    };
+//     return reply.status(200).send({
+//       data: myCards,
+//       message: "Cards fetched",
+//       status: 200,
+//     });
+//   } catch (error: any) {
+//     if (error instanceof CustomError) {
+//       // Handle specific CustomError instances
+//       return reply.status(error.status).send({
+//         message: error.message,
+//         status: error.status,
+//       });
+//     } else {
+//       console.log(error);
+//       return reply.status(500).send({
+//         message: error.message,
+//         status: 500,
+//       });
+//     }
+//   }
+// };
+// export const addCard = async (req: FastifyRequest, reply: FastifyReply) => {
+//   try {
+//     const { authId, profileId } = req.vendor as {
+//       authId: string;
+//       profileId: string;
+//     };
+//     const { cardNumber, name, expiryDate, CVV } = req.body as {
+//       cardNumber: string;
+//       name: string;
+//       expiryDate: string;
+//       CVV: string;
+//     };
 
-    // const addedCard = await CardService.addUserCards(
-    //   profileId,
-    //   cardNumber,
-    //   name,
-    //   expiryDate,
-    //   CVV
-    // );
+//     // const addedCard = await CardService.addUserCards(
+//     //   profileId,
+//     //   cardNumber,
+//     //   name,
+//     //   expiryDate,
+//     //   CVV
+//     // );
 
-    return reply.status(200).send({
-      // data: addedCard,
-      message: "Card added",
-      status: 200,
-    });
-  } catch (error: any) {
-    if (error instanceof CustomError) {
-      // Handle specific CustomError instances
-      return reply.status(error.status).send({
-        message: error.message,
-        status: error.status,
-      });
-    } else {
-      console.log(error);
-      return reply.status(500).send({
-        message: error.message,
-        status: 500,
-      });
-    }
-  }
-};
+//     return reply.status(200).send({
+//       // data: addedCard,
+//       message: "Card added",
+//       status: 200,
+//     });
+//   } catch (error: any) {
+//     if (error instanceof CustomError) {
+//       // Handle specific CustomError instances
+//       return reply.status(error.status).send({
+//         message: error.message,
+//         status: error.status,
+//       });
+//     } else {
+//       console.log(error);
+//       return reply.status(500).send({
+//         message: error.message,
+//         status: 500,
+//       });
+//     }
+//   }
+// };

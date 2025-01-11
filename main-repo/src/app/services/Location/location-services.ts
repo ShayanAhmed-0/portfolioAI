@@ -81,20 +81,20 @@ export default class LocationService {
       throw error; // Rethrow the error for handling elsewhere
     }
   }
-  public static async getLocationName(lat: number, lng: number) {
-    try {
-      logger.info("getLocationName");
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${validatedEnv.GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-      logger.info(data);
-      return data;
-    } catch (error) {
-      console.error("Error deleting location:", error);
-      throw error; // Rethrow the error for handling elsewhere
-    }
-  }
+  // public static async getLocationName(lat: number, lng: number) {
+  //   try {
+  //     logger.info("getLocationName");
+  //     const response = await fetch(
+  //       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${validatedEnv.GOOGLE_MAPS_API_KEY}`
+  //     );
+  //     const data = await response.json();
+  //     logger.info(data);
+  //     return data;
+  //   } catch (error) {
+  //     console.error("Error deleting location:", error);
+  //     throw error; // Rethrow the error for handling elsewhere
+  //   }
+  // }
 
   // You can add more methods as needed
 }

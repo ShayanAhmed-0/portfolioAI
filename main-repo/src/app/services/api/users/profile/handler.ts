@@ -57,79 +57,79 @@ export const get_profile = async (req: FastifyRequest, reply: FastifyReply) => {
   }
 };
 
-export const edit_user_profile = async (
-  req: FastifyRequest,
-  reply: FastifyReply
-) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phone,
-      longitude,
-      latitude,
-      dietaryRestrictions,
-      cuisineTypes,
-    } = req.body as {
-      firstName?: string;
-      lastName?: string;
-      phone?: string;
-      longitude?: string;
-      latitude?: string;
-      dietaryRestrictions?: string[];
-      cuisineTypes?: string[];
-    };
+// export const edit_user_profile = async (
+//   req: FastifyRequest,
+//   reply: FastifyReply
+// ) => {
+//   try {
+//     const {
+//       firstName,
+//       lastName,
+//       phone,
+//       longitude,
+//       latitude,
+//       dietaryRestrictions,
+//       cuisineTypes,
+//     } = req.body as {
+//       firstName?: string;
+//       lastName?: string;
+//       phone?: string;
+//       longitude?: string;
+//       latitude?: string;
+//       dietaryRestrictions?: string[];
+//       cuisineTypes?: string[];
+//     };
 
-    console.log(req.user);
+//     console.log(req.user);
 
-    const { email, authId, profileId } = req.user as {
-      email: string;
-      authId: string;
-      profileId: string;
-    };
-    const { file } = req as unknown as { file: any };
-    console.log(file);
-    if (file) {
-      const { filename, fieldname } = file as unknown as {
-        filename: any;
-        fieldname: any;
-      };
-      if (fieldname) {
-        const mediaUrl = `${validatedEnv.LIVE_URl}/public/uploads/avatar/${filename}`;
-        const media = await MediaService.createUserMedia(
-          profileId,
-          mediaUrl,
-          fieldname
-        );
-      }
-    }
-    const updatedProfile = await UserService.editUserProfile(
-      profileId,
-      firstName,
-      lastName,
-      phone,
-      parseFloat(longitude!),
-      parseFloat(latitude!),
-      dietaryRestrictions,
-      cuisineTypes
-    );
-    return reply
-      .status(200)
-      .send({ data: updatedProfile, message: "Profile Updated", status: 200 });
-  } catch (error: any) {
-    if (error instanceof CustomError) {
-      console.log(error);
-      // Handle specific CustomError instances
-      return reply.status(error.status).send({
-        message: error.message,
-        status: error.status,
-      });
-    } else {
-      console.log(error);
-      return reply.status(500).send({
-        message: error.message,
-        status: 500,
-      });
-    }
-  }
-};
+//     const { email, authId, profileId } = req.user as {
+//       email: string;
+//       authId: string;
+//       profileId: string;
+//     };
+//     const { file } = req as unknown as { file: any };
+//     console.log(file);
+//     if (file) {
+//       const { filename, fieldname } = file as unknown as {
+//         filename: any;
+//         fieldname: any;
+//       };
+//       if (fieldname) {
+//         const mediaUrl = `${validatedEnv.LIVE_URl}/public/uploads/avatar/${filename}`;
+//         const media = await MediaService.createUserMedia(
+//           profileId,
+//           mediaUrl,
+//           fieldname
+//         );
+//       }
+//     }
+//     const updatedProfile = await UserService.editUserProfile(
+//       profileId,
+//       firstName,
+//       lastName,
+//       phone,
+//       parseFloat(longitude!),
+//       parseFloat(latitude!),
+//       dietaryRestrictions,
+//       cuisineTypes
+//     );
+//     return reply
+//       .status(200)
+//       .send({ data: updatedProfile, message: "Profile Updated", status: 200 });
+//   } catch (error: any) {
+//     if (error instanceof CustomError) {
+//       console.log(error);
+//       // Handle specific CustomError instances
+//       return reply.status(error.status).send({
+//         message: error.message,
+//         status: error.status,
+//       });
+//     } else {
+//       console.log(error);
+//       return reply.status(500).send({
+//         message: error.message,
+//         status: 500,
+//       });
+//     }
+//   }
+// };

@@ -5,14 +5,16 @@ const userSchema = z.object({
   username: z.string().min(1, "username is required"),
   about: z.string().min(1, "about is required"),
   age: z.string(),
+  phone: z.string(),
+  gender: z.enum(["Male","Female","Other"]),
   skills: z.array(z.string()),
-  deviceToken: z
-    .string()
-    .min(10, "Device token must be between 10 and 200 characters")
-    .max(200, "Device token must be between 10 and 200 characters"),
-  deviceType: z
-    .enum(["ios", "android"])
-    .refine((value) => value !== null, "Invalid device type"),
+  // deviceToken: z
+  //   .string()
+  //   .min(10, "Device token must be between 10 and 200 characters")
+  //   .max(200, "Device token must be between 10 and 200 characters"),
+  // deviceType: z
+  //   .enum(["ios", "android"])
+  //   .refine((value) => value !== null, "Invalid device type"),
   
 });
 

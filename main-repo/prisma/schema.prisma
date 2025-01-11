@@ -8,6 +8,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Gender{
+  Male
+  Female
+  Other
+}
 
 model Auth {
   id                 String         @id @default(uuid())
@@ -29,11 +34,12 @@ model UserProfile {
   auth_id              String               @unique
   user_name           String
   avatar              Media?
+  about String
   longitude           Float?
   latitude            Float?
   age                 Int
-  // phone               String               @unique
-  gender              String
+  phone               String               @unique
+  gender              Gender
   skills  Skills[]
   allowNotifications  Boolean              @default(true)
   Notification        Notification[]
