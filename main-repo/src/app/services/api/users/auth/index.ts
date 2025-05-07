@@ -18,6 +18,8 @@ import {
   resend_forgot_password_otp,
   change_password,
   delete_account,
+  github_login,
+  github_callback,
   // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
@@ -113,9 +115,8 @@ const user_auth = async (fastify: FastifyInstance) => {
               properties: {
                 id: { type: "string" },
                 email: { type: "string" },
-                role: { type: "string" },
               },
-              required: ["id", "email", "role"],
+              required: ["id", "email"],
             },
             message: { type: "string" },
             status: { type: "number" },
@@ -168,53 +169,6 @@ const user_auth = async (fastify: FastifyInstance) => {
     url: "/create-profile",
     schema: {
       headers: authheaders,
-      // body: {
-      //   type: "object",
-      //   properties: {
-      //     first_name: { type: "string" },
-      //     last_name: { type: "string" },
-      //     phone: { type: "string" },
-      //     gender: { type: "string" },
-      //     age: { type: "number" },
-      //     // You may include other properties as needed for the profile creation
-      //     // avatar will be handled separately in preHandler
-      //   },
-      //   required: ["first_name", "last_name", "phone", "gender", "age"],
-      // },
-      response: {
-        201: {
-          type: "object",
-          properties: {
-            data: {
-              type: "object",
-              properties: {
-                id: { type: "string" },
-                first_name: { type: "string" },
-                last_name: { type: "string" },
-                phone: { type: "string" },
-                gender: { type: "string" },
-                age: { type: "number" },
-              },
-              required: [
-                "id",
-                "first_name",
-                "last_name",
-                "phone",
-                "gender",
-                "age",
-              ],
-            },
-            message: { type: "string" },
-            status: { type: "number" },
-            token: { type: "string" },
-          },
-          required: ["data", "message", "status", "token"],
-        },
-        400: otherRes,
-        404: otherRes,
-        409: otherRes,
-        500: otherRes,
-      },
     },
     preHandler: avatar_multipart.single("avatar"), // Handling file upload
     handler: create_user_profile,
@@ -240,89 +194,8 @@ const user_auth = async (fastify: FastifyInstance) => {
         properties: {
           email: { type: "string" },
           password: { type: "string" },
-          deviceType: { type: "string" },
-          deviceToken: { type: "string" },
         },
-        required: ["email", "password", "deviceType", "deviceToken"],
-      },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            data: {
-              type: "object",
-              properties: {
-                id: { type: "string" },
-                email: { type: "string" },
-                role: { type: "string" },
-                userProfile: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    firstName: { type: "string" },
-                    lastName: { type: "string" },
-                    phone: { type: "string" },
-                    age: { type: "number" },
-                    gender: { type: "string" },
-                    longitude: {
-                      type: "number",
-                    },
-                    latitude: {
-                      type: "number",
-                    },
-                    cuisineTypes: { type: "array" },
-                    dietaryRestrictions: { type: "array" },
-                    preferences: { type: "array" },
-                    avatar: {
-                      type: "object",
-                      properties: {
-                        url: { type: "string" },
-                      },
-                      required: ["url"],
-                    },
-                  },
-                  required: [
-                    "id",
-                    "firstName",
-                    "lastName",
-                    "phone",
-                    "age",
-                    "gender",
-                    "longitude",
-                    "latitude",
-                    "cuisineTypes",
-                    "dietaryRestrictions",
-                    "preferences",
-                  ],
-                },
-              },
-              required: ["id", "email", "role", "userProfile"],
-            },
-            message: { type: "string" },
-            status: { type: "number" },
-            token: { type: "string" },
-          },
-          required: ["data", "message", "status", "token"],
-        },
-        404: {
-          type: "object",
-          properties: {
-            data: {
-              type: "object",
-              properties: {
-                isProfileCompleted: { type: "boolean" },
-                isSignedUp: { type: "boolean" },
-              },
-            },
-            status: { type: "number" },
-            message: { type: "string" },
-            token: { type: "string" },
-          },
-          required: ["status", "message"],
-        },
-        401: otherRes,
-        409: otherRes,
-        500: otherRes,
+        required: ["email", "password"],
       },
     },
     handler: user_login,
@@ -544,6 +417,50 @@ const user_auth = async (fastify: FastifyInstance) => {
     },
     handler: delete_account,
     preValidation: user_bearer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "GET",
+    url: "/login/github",
+    schema: {
+      response: {
+        200: otherRes,
+        404: otherRes,
+        409: otherRes,
+        500: otherRes,
+      },
+    },
+    handler: github_login,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "GET",
+    url: "/github/callback",
+    schema: {
+      response: {
+        200: otherRes,
+        404: otherRes,
+        409: otherRes,
+        500: otherRes,
+      },
+    },
+    handler: github_callback,
     errorHandler: (
       error: FastifyError,
       req: FastifyRequest,

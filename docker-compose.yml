@@ -1,17 +1,25 @@
 version: '3.9'
+
 services:
-  StreetEats-db:
-    container_name: StreetEats-db
+  redis:
+    container_name: portfolio-redis
+    image: redis
+    ports:
+      - "6378:6379"
+    restart: always
+
+  portfolio-db:
+    container_name: portfolio-db
     image: postgres
     ports:
       - "5434:5432"
     volumes:
-      - postgres_data_streeteats:/var/lib/postgresql/data
+      - portfolio_postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_DB: StreetEats
-      POSTGRES_PASSWORD: staEteertS
+      POSTGRES_DB: portfolio
+      POSTGRES_PASSWORD: portfolio
     restart: always
 
 volumes:
-  postgres_data_streeteats:
+  portfolio_postgres_data:

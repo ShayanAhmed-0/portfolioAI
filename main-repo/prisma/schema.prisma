@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,107 +7,159 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Gender{
+enum Gender {
   Male
   Female
   Other
 }
 
 model Auth {
-  id                 String         @id @default(uuid())
-  email              String         @unique
-  password           String
-  is_profile_completed Boolean        @default(false)
-  salt               String
-  user_profile        UserProfile?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @default(now()) @updatedAt
-  isDeleted          Boolean        @default(false)
+  id                   String       @id @default(uuid())
+  email                String       @unique
+  password             String
+  is_profile_completed Boolean      @default(false)
+  salt                 String
+  user_profile         UserProfile?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @default(now()) @updatedAt
+  isDeleted            Boolean      @default(false)
 
   @@map("auth")
 }
 
 model UserProfile {
-  id                  String               @id @default(uuid())
-  auth                Auth                 @relation(fields: [auth_id], references: [id])
-  auth_id              String               @unique
-  user_name           String
-  avatar              Media?
-  about String
-  longitude           Float?
-  latitude            Float?
-  age                 Int
-  phone               String               @unique
-  gender              Gender
-  skills  Skills[]
-  allowNotifications  Boolean              @default(true)
-  Notification        Notification[]
-  device              Device[]
-  reviews Reviews[]
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @default(now()) @updatedAt
-  
+  id                 String         @id @default(uuid())
+  auth               Auth           @relation(fields: [auth_id], references: [id])
+  auth_id            String         @unique
+  user_name          String
+  avatar             Media?
+  about              String
+  longitude          Float?
+  latitude           Float?
+  age                Int
+  phone              String         @unique
+  gender             Gender
+  skills             Skills[]
+  allowNotifications Boolean        @default(true)
+  Notification       Notification[]
+  device             Device[]
+  reviews            Reviews[]
+  repos              Repos[]
+  git_user           GitUser[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now()) @updatedAt
+
   @@map("user_profile")
 }
 
-model Skills{
-  id                  String               @id @default(uuid())
-  user_profile                UserProfile                 @relation(fields: [user_profile_id], references: [id])
-  user_profile_id              String               @unique
-  name  String
-  level Int @default(0)
-
+model Skills {
+  id              String       @id @default(uuid())
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id String?
+  name            String
+  level           Int          @default(0)
 
   @@map("skills")
 }
 
+model Repos {
+  id               String       @id @default(uuid())
+  user_profile     UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id  String?
+  name             String
+  full_name        String
+  private          Boolean
+  html_url         String
+  description      String?
+  fork             Boolean
+  created_at       DateTime
+  updated_at       DateTime
+  pushed_at        DateTime
+  homepage         String
+  stargazers_count Int
+  watchers_count   Int
+  language         String
+  forks_count      String
+  visibility       String
+  forks            Int
+  open_issues      Int
+  watchers         Int
+  default_branch   String
+
+  @@map("repos")
+}
+
+model GitUser {
+  id                        String       @id @default(uuid())
+  user_profile              UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id           String?
+  login                     String
+  avatar_url                String
+  html_url                  String
+  email                     String?
+  hireable                  String?
+  bio                       String?
+  public_repos              Int
+  public_gists              Int
+  followers                 Int
+  following                 Int
+  created_at                DateTime
+  updated_at                DateTime
+  total_private_repos       Int
+  owned_private_repos       Int
+  collaborators             Int
+  two_factor_authentication Boolean
+
+  @@map("git_user")
+}
 
 model Media {
-  id                String           @id @default(uuid())
-  name              String
-  url               String
+  id              String       @id @default(uuid())
+  name            String
+  url             String
   // type          MediaType // Enum to distinguish between different types of media
-  user_profile       UserProfile?     @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
-  user_profile_id     String?          @unique
-  reviews Reviews[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @default(now()) @updatedAt
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
+  user_profile_id String?      @unique
+  reviews         Reviews[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @default(now()) @updatedAt
+
   @@map("media")
 }
 
 model Reviews {
-  id              String        @id @default(uuid())
-  user_profile       UserProfile?     @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
-  user_profile_id     String?          @unique
+  id              String       @id @default(uuid())
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
+  user_profile_id String?      @unique
   review          String
   rating          Int
   images          Media[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now()) @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @default(now()) @updatedAt
 
   @@map("reviews")
 }
+
 model Device {
-  id                String           @id @default(uuid())
-  deviceType        String
-  deviceToken       String
-  isLoggedIn        Boolean          @default(false)
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
- user_profile UserProfile?     @relation(fields: [user_profile_id], references: [id])
-user_profile_id       String?
- 
+  id              String       @id @default(uuid())
+  deviceType      String
+  deviceToken     String
+  isLoggedIn      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id String?
 }
 
 model Notification {
-  id              String         @id @default(uuid())
-  is_read          Boolean        @default(false)
+  id              String       @id @default(uuid())
+  is_read         Boolean      @default(false)
   title           String
   description     String
-  user_profile     UserProfile?   @relation(fields: [user_profile_id], references: [id])
-  user_profile_id   String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@map("notification")
 }

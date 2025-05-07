@@ -14,8 +14,11 @@ import { kafkarun } from "../../../../../lib/kafka";
 import CustomError from "../../../../../utils/custom-response/custom-error";
 import LocationService from "../../../Location/location-services";
 import { validateCreateUserProfile } from "../../../../../utils/validation/user/crete-user";
+import GithubService from "../../../Github/github-services";
 
-
+interface GithubCallbackQuery {
+  code: string;
+}
 export const signup = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
     // console.log(req.body.email);
@@ -221,7 +224,7 @@ skills:string[]
     const mediaUrl = `${validatedEnv.LIVE_URl}/public/uploads/avatar/${filename}`;
 
     const createUserProfile = await UserService.createUserProfile(
-      id,
+      ExistingUser.id,
       username,
       about,
       parseInt(age.toString()),
@@ -230,7 +233,7 @@ skills:string[]
       skills,
     );
     if (!createUserProfile)
-      throw new CustomError("invalid cuisineTypes or dietaryRestrictions", 400);
+      throw new CustomError("error creating profile", 400);
     // const mediaUrl = `${validatedEnv.SCHEME}${validatedEnv.HOST}:${validatedEnv.PORT}/avatar/${req.file.filename}`;
     // const { filename } = req.file as { filename: any };
     // const { file } = req as unknown as { file: any };
@@ -285,11 +288,11 @@ skills:string[]
 
 export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
-    let { email, password, deviceType, deviceToken } = req.body as {
+    let { email, password } = req.body as {
       email: string;
       password: string;
-      deviceType: string;
-      deviceToken: string;
+      // deviceType: string;
+      // deviceToken: string;
     };
     email = email.toLowerCase();
     const Auth = await AuthService.getAuthByEmail(email);
@@ -334,20 +337,20 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
       { email, authId, profileId },
       validatedEnv.USER_JWT_SECRET
     );
-    const mydeviceToken = fullUser.user_profile.device.find(
-      (d: any) => d.deviceToken === deviceToken
-    );
-    if (mydeviceToken) {
-      if (!mydeviceToken.isLoggedIn)
-        await DeviceService.newLogIn(mydeviceToken.id);
-    }
-    if (!mydeviceToken) {
-      await DeviceService.updateUserDeviceToken(
-        profileId,
-        deviceToken,
-        deviceType
-      );
-    }
+    // const mydeviceToken = fullUser.user_profile.device.find(
+    //   (d: any) => d.deviceToken === deviceToken
+    // );
+    // if (mydeviceToken) {
+    //   if (!mydeviceToken.isLoggedIn)
+    //     await DeviceService.newLogIn(mydeviceToken.id);
+    // }
+    // if (!mydeviceToken) {
+    //   await DeviceService.updateUserDeviceToken(
+    //     profileId,
+    //     deviceToken,
+    //     deviceType
+    //   );
+    // }
     // console.log(fullUser);
     return reply.status(200).send({
       token,
@@ -610,6 +613,61 @@ export const delete_account = async (
       status: 200,
       message: "Account Deleted Successfully",
     });
+  } catch (error: any) {
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
+  }
+};
+export const github_login = async (
+  req: FastifyRequest,
+  reply: FastifyReply
+) => {
+  try {
+    const redirectUrl = GithubService.generateRedirectUrl()
+    reply.redirect(redirectUrl)
+  } catch (error: any) {
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
+  }
+};
+
+export const github_callback = async (
+  req:  FastifyRequest<{ Querystring: GithubCallbackQuery }>,
+  reply: FastifyReply
+) => {
+  try {
+    const code = req.query.code;
+    const getAccessToken = await GithubService.generateAccessToken(code)
+    const getGithubDetails = await GithubService.InitilizeOctoKit(getAccessToken)
+    // console.log(getGithubDetails.repos.at(0)?.owner)
+    // console.log(getGithubDetails.repos.at(0)?.description)
+    // console.log(getGithubDetails.repos.at(0)?.full_name)
+    console.log("getGithubDetails.repos.at(0)")
+    console.log(getGithubDetails.repos.find(r=>r.html_url==="https://github.com/ShayanAhmed-0/MarketPlace"))
+    console.log(getGithubDetails.user)
+    // getGithubDetails.repos.at(0)?.homepage
   } catch (error: any) {
     if (error instanceof CustomError) {
       // Handle specific CustomError instances
