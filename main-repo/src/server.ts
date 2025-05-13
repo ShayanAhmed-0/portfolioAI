@@ -52,18 +52,25 @@ app.register(fastifyStatic, {
 
   logger.info("hello world");
 
+  // app.register(fastifyCors, {
+  //   origin: true,
+  //   allowedHeaders: [
+  //     "Origin",
+  //     "X-Requested-With",
+  //     "Accept",
+  //     "Content-Type",
+  //     "Authorization",
+  //   ],
+  //   methods: ["GET", "PUT", "OPTIONS", "POST", "DELETE"],
+  //   exposedHeaders: "Content-Disposition",
+  // });
   app.register(fastifyCors, {
-    origin: true,
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Accept",
-      "Content-Type",
-      "Authorization",
-    ],
-    methods: ["GET", "PUT", "OPTIONS", "POST", "DELETE"],
-    exposedHeaders: "Content-Disposition",
-  });
+  origin: true, // Allows all origins
+  methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Disposition'],
+  credentials: true, // Optional: if you support cookies or auth headers
+});
 
   app.register(routes);
 

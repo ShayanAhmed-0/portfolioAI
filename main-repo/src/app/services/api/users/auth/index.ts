@@ -455,12 +455,12 @@ const user_auth = async (fastify: FastifyInstance) => {
     method: "GET",
     url: "/github/callback",
     schema: {
-      response: {
-        200: otherRes,
-        404: otherRes,
-        409: otherRes,
-        500: otherRes,
-      },
+      // response: {
+      //   200: otherRes,
+      //   404: otherRes,
+      //   409: otherRes,
+      //   500: otherRes,
+      // },
     },
     handler: github_callback,
     errorHandler: (

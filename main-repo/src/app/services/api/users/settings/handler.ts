@@ -89,8 +89,8 @@ export const allowNotifications = async (
       allowNotifications
     );
     return reply.status(200).send({
-      data: { notifications: updatedProfile.allowNotifications },
-      message: `notifications set to ${updatedProfile.allowNotifications}`,
+      data: { notifications: updatedProfile.allow_notifications },
+      message: `notifications set to ${updatedProfile.allow_notifications}`,
       status: 200,
     });
   } catch (error: any) {

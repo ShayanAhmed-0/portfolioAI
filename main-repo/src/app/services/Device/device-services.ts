@@ -7,7 +7,7 @@ export default class DeviceService {
     return prismaClient.userProfile.findUnique({
       where: { id },
       select: {
-        allowNotifications: true,
+        allow_notifications: true,
         device: { where: { isLoggedIn: true } },
       },
     });

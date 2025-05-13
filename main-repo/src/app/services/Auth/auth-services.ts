@@ -14,9 +14,6 @@ export default class AuthService {
         user_profile: {
           select: {
             id: true,
-            phone: true,
-            age: true,
-            gender: true,
             latitude: true,
             longitude: true,
             avatar: { select: { url: true } },
@@ -36,9 +33,6 @@ export default class AuthService {
         user_profile: {
           select: {
             id: true,
-            phone: true,
-            age: true,
-            gender: true,
             avatar: { select: { url: true } },
           },
         },
@@ -65,9 +59,16 @@ export default class AuthService {
       include: { user_profile: true },
     });
   }
+  public static checkExistingUserName(user_name:string) {
+    return prismaClient.userProfile.findUnique({
+      where: {
+        user_name,
+      }
+    });
+  }
   public static checkExistingProfile(email: string) {
     return prismaClient.auth.findUnique({
-      where: { email, is_profile_completed: true, isDeleted: false },
+      where: { email },
     });
   }
   public static createUser(

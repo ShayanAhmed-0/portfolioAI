@@ -31,25 +31,47 @@ model UserProfile {
   id                 String         @id @default(uuid())
   auth               Auth           @relation(fields: [auth_id], references: [id])
   auth_id            String         @unique
-  user_name          String
+  full_name          String
+  user_name          String         @unique
+  professional_title String?
   avatar             Media?
   about              String
   longitude          Float?
   latitude           Float?
-  age                Int
-  phone              String         @unique
-  gender             Gender
+  location_name          String?
   skills             Skills[]
-  allowNotifications Boolean        @default(true)
+  allow_notifications Boolean        @default(true)
   Notification       Notification[]
   device             Device[]
   reviews            Reviews[]
   repos              Repos[]
+  experience         Experience[]
+  education          Education[]
   git_user           GitUser?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @default(now()) @updatedAt
 
   @@map("user_profile")
+}
+
+model Experience{
+  id                 String         @id @default(uuid())
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id String?
+  company           String
+  position          String
+  start_date         String
+  end_date           String
+  description       String?
+}
+model Education{
+  id                 String         @id @default(uuid())
+  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
+  user_profile_id String?
+  institution           String
+  degree          String
+  start_date         String
+  end_date           String
 }
 
 model Skills {

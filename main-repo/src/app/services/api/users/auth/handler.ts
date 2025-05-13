@@ -14,7 +14,7 @@ import { kafkarun } from "../../../../../lib/kafka";
 import CustomError from "../../../../../utils/custom-response/custom-error";
 import LocationService from "../../../Location/location-services";
 import { validateCreateUserProfile } from "../../../../../utils/validation/user/crete-user";
-import GithubService from "../../../Github/github-services";
+import GithubService, { Repo } from "../../../Github/github-services";
 import { trace } from "potrace";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
@@ -170,13 +170,49 @@ export const resend_signup_otp = async (
     }
   }
 };
-
+interface CreateUserProfileBody {
+  username: string;
+  firstName: string;
+  lastName: string;
+  professional_title: string;
+  latitude: number;
+  longitude: number;
+  location_name: string;
+  skills: string[];
+  about: string;
+  experience: Array<{
+    company: string;
+    position: string;
+    startDate: string;
+    endDate: string;
+    description: string | null;
+  }>; // Define this array of objects
+  education: Array<{
+    institution: string;
+    degree: string;
+    startDate: string;
+    endDate: string;
+  }>; // Define this array of objects
+  deviceType?: "ios" | "android";
+}
 export const create_user_profile = async (
   req: FastifyRequest,
   reply: FastifyReply
 ) => {
   try {
-    const validation = validateCreateUserProfile(req.body);
+    const body = req.body as CreateUserProfileBody;
+    const parsedBody = {
+      ...body,
+      latitude: parseFloat(body.latitude.toString()), // Ensure latitude is parsed as a float
+      longitude: parseFloat(body.longitude.toString()), // Ensure longitude is parsed as a float
+      experience: Array.isArray(body.experience)
+        ? body.experience
+        : JSON.parse(body.experience), // Ensure experience is an array
+      education: Array.isArray(body.education)
+        ? body.education
+        : JSON.parse(body.education), // Ensure education is an array
+    };
+    const validation = validateCreateUserProfile(parsedBody);
     console.log(validation);
     if (validation.errors)
       return reply.status(200).send({
@@ -184,17 +220,8 @@ export const create_user_profile = async (
         message: "Valdation Errors",
         data: validation.errors,
       });
-    // console.log(req);
-    const { username, about, age, phone, gender, skills } = req.body as {
-      username: string;
-      about: string;
-      age: number | string;
-      phone: number | string;
-      gender: "Male" | "Female" | "Other";
-      skills: string[];
-    };
 
-    const { email, id } = req.user as { email: string; id: string };
+    const { email } = req.user as { email: string; id: string };
 
     const { file } = req as unknown as { file: any };
     if (!file) {
@@ -205,29 +232,50 @@ export const create_user_profile = async (
       throw new CustomError("User Avatar is Required", 400);
     }
     const checkProfile = await AuthService.checkExistingProfile(email);
-    if (checkProfile) {
-      throw new CustomError("Profile Already Exist Try Logging in", 409);
-    }
-    const checkPhone = await UserService.checkExistingPhone(phone.toString());
-    if (checkProfile) {
-      throw new CustomError("Profile Already Exist Try Logging in", 409);
-    }
-
-    const ExistingUser = await AuthService.checkExistingUser(email);
-    if (!ExistingUser) {
+    if (!checkProfile) {
       throw new CustomError("User Does not Exist", 404);
     }
+    if (checkProfile?.is_profile_completed) {
+      throw new CustomError("Profile Already Exist Try Logging in", 409);
+    }
 
-    const mediaUrl = `${validatedEnv.LIVE_URl}/public/uploads/avatar/${filename}`;
+    // const mediaUrl = `${validatedEnv.LIVE_URl}/public/uploads/avatar/${filename}`;
 
+    const {
+      username,
+      firstName,
+      lastName,
+      professional_title,
+      latitude,
+      longitude,
+      location_name,
+      about,
+      skills,
+      experience,
+      education,
+      deviceToken,
+      // deviceType,
+    } = validation.data;
+
+    const checkUserName = await AuthService.checkExistingUserName(username);
+    if (checkUserName) {
+      throw new CustomError("Username Already Exists", 409);
+    }
+    const mediaUrl = `/avatar/${filename}`;
     const createUserProfile = await UserService.createUserProfile(
-      ExistingUser.id,
+      checkProfile.id,
+      `${firstName} ${lastName}`,
       username,
       about,
-      parseInt(age.toString()),
-      phone.toString(),
-      gender,
-      skills
+      skills,
+      professional_title,
+      longitude,
+      latitude,
+      location_name,
+      experience,
+      education,
+      mediaUrl,
+      filename
     );
     if (!createUserProfile)
       throw new CustomError("error creating profile", 400);
@@ -245,7 +293,7 @@ export const create_user_profile = async (
     //   media.id
     // );
     const fullUser = await AuthService.getFullAuthByIdAndUserProfile(
-      ExistingUser.id
+      checkProfile.id
     );
     const authId = fullUser!.id;
     const profileId = createUserProfile.id;
@@ -658,21 +706,71 @@ export const github_callback = async (
     const getGithubDetails = await GithubService.InitilizeOctoKit(
       getAccessToken
     );
-    // console.log(getGithubDetails.repos.at(0)?.owner)
-    // console.log(getGithubDetails.repos.at(0)?.description)
-    // console.log(getGithubDetails.repos.at(0)?.full_name)
-    console.log("getGithubDetails.repos.at(0)");
-    console.log(
-      getGithubDetails.repos.find(
-        (r) => r.html_url === "https://github.com/ShayanAhmed-0/MarketPlace"
-      )
-    );
-    console.log(getGithubDetails.user);
     return reply.status(200).send({
-      getGithubDetails,
       status: 200,
-      message: "User Github Details Fetched Successfully",
+      getGithubDetails,
+      message: "Github Details Fetced Successfully",
     });
+    // const repoData: Repo[] = getGithubDetails.repos.map((repo: any) => ({
+    //   name: repo.name,
+    //   full_name: repo.full_name,
+    //   private: repo.private,
+    //   html_url: repo.html_url,
+    //   description: repo.description,
+    //   fork: repo.fork,
+    //   created_at: new Date(repo.created_at),
+    //   updated_at: new Date(repo.updated_at),
+    //   pushed_at: new Date(repo.pushed_at),
+    //   homepage: repo.homepage || "",
+    //   stargazers_count: repo.stargazers_count,
+    //   watchers_count: repo.watchers_count,
+    //   language: repo.language || "Unknown",
+    //   forks_count: repo.forks_count.toString(),
+    //   visibility: repo.visibility,
+    //   forks: repo.forks,
+    //   open_issues: repo.open_issues,
+    //   watchers: repo.watchers,
+    //   default_branch: repo.default_branch,
+    // }));
+    // const {
+    //   login,
+    //   avatar_url,
+    //   html_url,
+    //   email,
+    //   hireable,
+    //   bio,
+    //   public_repos,
+    //   public_gists,
+    //   followers,
+    //   following,
+    //   created_at,
+    //   updated_at,
+    //   total_private_repos,
+    //   owned_private_repos,
+    //   collaborators,
+    // } = getGithubDetails.user;
+    // await GithubService.CreateManyRepos(repoData);
+    // await GithubService.CreateGitUser(
+    //   "",
+    //   login,
+    //   avatar_url,
+    //   html_url,
+    //   hireable,
+    //   bio,
+    //   public_repos,
+    //   public_gists,
+    //   followers,
+    //   following,
+    //   created_at,
+    //   updated_at,
+    //   total_private_repos,
+    //   owned_private_repos,
+    //   collaborators,
+    //   false,
+    //   email
+    // );
+
+    // return reply.redirect("http://localhost:3000/shayan");
     // getGithubDetails.repos.at(0)?.homepage
   } catch (error: any) {
     if (error instanceof CustomError) {
@@ -736,7 +834,7 @@ export const image_vectorizer = async (
     fs.writeFileSync(outputPath, svg);
 
     // Return the relative path or full URL (e.g., if using static file serving)
-    const fileUrl = `${validatedEnv.LINK}/vectorized/${filename}`;
+    const fileUrl = `/vectorized/${filename}`;
     reply.send({
       message: "Image vectorized successfully",
       url: fileUrl,
@@ -764,7 +862,7 @@ export const image_cartoonizer = async (
 
     const cartoonDir = path.join(
       process.cwd(),
-      '../',
+      "../",
       "public",
       "uploads",
       "cartoonized"

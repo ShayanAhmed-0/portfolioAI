@@ -6,46 +6,88 @@ import AuthService from "../Auth/auth-services";
 import LocationService from "../Location/location-services";
 
 export default class UserService {
-  public static checkExistingPhone(phone: string) {
-    return prismaClient.userProfile.findUnique({
-      where:{
-         phone
-      }
-    })
-  }
+  // public static checkExistingPhone(phone: string) {
+  //   return prismaClient.userProfile.findUnique({
+  //     where:{
+  //        phone
+  //     }
+  //   })
+  // }
 
-  public static async createUserProfile(
-    auth_id: string,
-    user_name:string,
-    about:string,
-    age:number,
-    phone:string,
-    gender: "Male" | "Female" | "Other",
-    skills:string[],
-  ) {
-    try {
-      // Create user profile
-      const userProfile = await prismaClient.userProfile.create({
-        data: {
-          auth_id,
-          phone,
-          gender,
-          user_name,
-          about,
-          age,
-          skills: {
-            connect: skills.map((id) => ({ id })),
-          },
-        }
-      });
-      const a = await AuthService.updateProfileCompleted(auth_id);
-      console.log(a);
-      return userProfile;
-    } catch (error) {
-      console.error("Error creating user profile:", error);
-      throw error;
-    }
+public static async createUserProfile(
+  auth_id: string,
+  full_name: string,
+  user_name: string,
+  about: string,
+  skills: string[],
+  professional_title: string,
+  longitude: number,
+  latitude: number,
+  location_name: string,
+  experience: {
+    company: string;
+    position: string;
+    startDate: string;
+    endDate: string;
+    description?: string | null;
+  }[],
+  education: {
+    institution: string;
+    degree: string;
+    startDate: string;
+    endDate: string;
+  }[],
+  mediaUrl:string,
+  filename:string
+) {
+  try {
+    const userProfile = await prismaClient.userProfile.create({
+      data: {
+        auth_id,
+        user_name,
+        professional_title,
+        longitude,
+        latitude,
+        location_name,
+        full_name,
+        about,
+        avatar:{
+          create:{
+            name:filename,
+            url:mediaUrl
+          }
+        },
+        skills: {
+          connect: skills.map((id) => ({ id })),
+        },
+        experience: {
+          create: experience.map((exp) => ({
+            company: exp.company,
+            position: exp.position,
+            start_date: exp.startDate,
+            end_date: exp.endDate,
+            description: exp.description ?? null,
+          })),
+        },
+        education: {
+          create: education.map((edu) => ({
+            institution: edu.institution,
+            degree: edu.degree,
+            start_date: edu.startDate,
+            end_date: edu.endDate,
+          })),
+        },
+      },
+    });
+
+    const a = await AuthService.updateProfileCompleted(auth_id);
+    console.log(a);
+    return userProfile;
+  } catch (error) {
+    console.error("Error creating user profile:", error);
+    throw error;
   }
+}
   public static async getUserProfileById(id: string) {
     try {
       // Create user profile
@@ -55,11 +97,11 @@ export default class UserService {
           auth: { select: { id: true, email: true, is_profile_completed: true } },
           avatar: { select: { id: true, name: true, url: true } },
           id: true,
-          age: true,
-          gender: true,
+          // age: true,
+          // gender: true,
           latitude: true,
           longitude: true,
-          phone: true,
+          // phone: true,
         },
       });
     } catch (error) {
@@ -92,9 +134,9 @@ export default class UserService {
   ) {
     return prismaClient.userProfile.update({
       where: { id },
-      data: { allowNotifications },
+      data: { allow_notifications:allowNotifications },
       select: {
-        allowNotifications: true,
+        allow_notifications: true,
       },
     });
   }
