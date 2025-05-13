@@ -20,6 +20,8 @@ import {
   delete_account,
   github_login,
   github_callback,
+  image_vectorizer,
+  image_cartoonizer,
   // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
@@ -461,6 +463,52 @@ const user_auth = async (fastify: FastifyInstance) => {
       },
     },
     handler: github_callback,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/image/vectorizer",
+    schema: {
+      response: {
+        // 200: otherRes,
+        // 404: otherRes,
+        // 409: otherRes,
+        // 500: otherRes,
+      },
+    },
+    preHandler: avatar_multipart.single("image"),
+    handler: image_vectorizer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/image/cartoonizer",
+    schema: {
+      response: {
+        // 200: otherRes,
+        // 404: otherRes,
+        // 409: otherRes,
+        // 500: otherRes,
+      },
+    },
+    preHandler: avatar_multipart.single("image"),
+    handler: image_cartoonizer,
     errorHandler: (
       error: FastifyError,
       req: FastifyRequest,

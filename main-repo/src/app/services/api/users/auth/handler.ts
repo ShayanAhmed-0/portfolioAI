@@ -15,6 +15,11 @@ import CustomError from "../../../../../utils/custom-response/custom-error";
 import LocationService from "../../../Location/location-services";
 import { validateCreateUserProfile } from "../../../../../utils/validation/user/crete-user";
 import GithubService from "../../../Github/github-services";
+import { trace } from "potrace";
+import sharp from "sharp";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 
 interface GithubCallbackQuery {
   code: string;
@@ -102,7 +107,7 @@ export const signup_otp = async (req: FastifyRequest, reply: FastifyReply) => {
 
     const user = await AuthService.createUser(
       req.user.email,
-      req.user.password,
+      req.user.password
     );
     return reply
       .status(200)
@@ -171,7 +176,6 @@ export const create_user_profile = async (
   reply: FastifyReply
 ) => {
   try {
-
     const validation = validateCreateUserProfile(req.body);
     console.log(validation);
     if (validation.errors)
@@ -181,20 +185,13 @@ export const create_user_profile = async (
         data: validation.errors,
       });
     // console.log(req);
-    const {
-      username,
-      about,
-      age,
-      phone,
-      gender,
-      skills,
-    } = req.body as {
-      username:string
-about:string
-age:number|string
-phone: number|string
-gender: "Male" | "Female" | "Other",
-skills:string[]
+    const { username, about, age, phone, gender, skills } = req.body as {
+      username: string;
+      about: string;
+      age: number | string;
+      phone: number | string;
+      gender: "Male" | "Female" | "Other";
+      skills: string[];
     };
 
     const { email, id } = req.user as { email: string; id: string };
@@ -230,7 +227,7 @@ skills:string[]
       parseInt(age.toString()),
       phone.toString(),
       gender,
-      skills,
+      skills
     );
     if (!createUserProfile)
       throw new CustomError("error creating profile", 400);
@@ -382,7 +379,7 @@ export const set_location = async (
     const { profileId } = req.user as { profileId: string };
     const { longitude, latitude } = req.body as {
       longitude: string;
-      latitude:  string;
+      latitude: string;
     };
     const updatedLocation = await UserService.updateUserLocation(
       profileId,
@@ -391,8 +388,8 @@ export const set_location = async (
     );
 
     await LocationService.createLocation(
-       parseFloat(longitude),
-       parseFloat(latitude),
+      parseFloat(longitude),
+      parseFloat(latitude),
       profileId
     );
     return reply.status(200).send({
@@ -416,8 +413,6 @@ export const set_location = async (
     }
   }
 };
-
-
 
 export const forgot_password = async (
   req: FastifyRequest,
@@ -634,8 +629,8 @@ export const github_login = async (
   reply: FastifyReply
 ) => {
   try {
-    const redirectUrl = GithubService.generateRedirectUrl()
-    reply.redirect(redirectUrl)
+    const redirectUrl = GithubService.generateRedirectUrl();
+    reply.redirect(redirectUrl);
   } catch (error: any) {
     if (error instanceof CustomError) {
       // Handle specific CustomError instances
@@ -654,19 +649,30 @@ export const github_login = async (
 };
 
 export const github_callback = async (
-  req:  FastifyRequest<{ Querystring: GithubCallbackQuery }>,
+  req: FastifyRequest<{ Querystring: GithubCallbackQuery }>,
   reply: FastifyReply
 ) => {
   try {
     const code = req.query.code;
-    const getAccessToken = await GithubService.generateAccessToken(code)
-    const getGithubDetails = await GithubService.InitilizeOctoKit(getAccessToken)
+    const getAccessToken = await GithubService.generateAccessToken(code);
+    const getGithubDetails = await GithubService.InitilizeOctoKit(
+      getAccessToken
+    );
     // console.log(getGithubDetails.repos.at(0)?.owner)
     // console.log(getGithubDetails.repos.at(0)?.description)
     // console.log(getGithubDetails.repos.at(0)?.full_name)
-    console.log("getGithubDetails.repos.at(0)")
-    console.log(getGithubDetails.repos.find(r=>r.html_url==="https://github.com/ShayanAhmed-0/MarketPlace"))
-    console.log(getGithubDetails.user)
+    console.log("getGithubDetails.repos.at(0)");
+    console.log(
+      getGithubDetails.repos.find(
+        (r) => r.html_url === "https://github.com/ShayanAhmed-0/MarketPlace"
+      )
+    );
+    console.log(getGithubDetails.user);
+    return reply.status(200).send({
+      getGithubDetails,
+      status: 200,
+      message: "User Github Details Fetched Successfully",
+    });
     // getGithubDetails.repos.at(0)?.homepage
   } catch (error: any) {
     if (error instanceof CustomError) {
@@ -684,7 +690,116 @@ export const github_callback = async (
     }
   }
 };
+export const image_vectorizer = async (
+  req: FastifyRequest,
+  reply: FastifyReply
+) => {
+  try {
+    const { file } = req as unknown as { file: any };
 
+    if (!file) {
+      throw new CustomError("User Avatar is Required", 400);
+    }
+
+    const inputPath = file.path;
+
+    const buffer = await sharp(inputPath)
+      .resize(1024)
+      .grayscale()
+      .toFormat("png") // Ensure compatibility
+      .toBuffer();
+
+    // Wrap Potrace trace in a Promise
+    const svg: string = await new Promise((resolve, reject) => {
+      trace(buffer, { threshold: 128 }, (err, svg) => {
+        // Cleanup uploaded file
+        fs.unlink(inputPath, () => {}); // Non-blocking deletion
+
+        if (err) {
+          return reject(err);
+        }
+        resolve(svg);
+      });
+    });
+    const outputDir = path.join(
+      process.cwd(),
+      "../public/uploads",
+      "vectorized"
+    );
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const filename = `vector-${uuidv4()}.svg`;
+    const outputPath = path.join(outputDir, filename);
+
+    // Save SVG to disk
+    fs.writeFileSync(outputPath, svg);
+
+    // Return the relative path or full URL (e.g., if using static file serving)
+    const fileUrl = `${validatedEnv.LINK}/vectorized/${filename}`;
+    reply.send({
+      message: "Image vectorized successfully",
+      url: fileUrl,
+    });
+  } catch (error: any) {
+    console.error("Vectorization error:", error);
+    reply.status(error.statusCode || 500).send({
+      error: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const image_cartoonizer = async (
+  req: FastifyRequest,
+  reply: FastifyReply
+) => {
+  try {
+    const { file } = req as unknown as { file: any };
+
+    if (!file) {
+      return reply.status(400).send({ error: "Image file is required" });
+    }
+
+    const inputPath = file.path;
+
+    const cartoonDir = path.join(
+      process.cwd(),
+      '../',
+      "public",
+      "uploads",
+      "cartoonized"
+    );
+
+    if (!fs.existsSync(cartoonDir)) {
+      fs.mkdirSync(cartoonDir, { recursive: true });
+    }
+
+    const filename = `cartoon-${uuidv4()}.jpg`;
+    const outputPath = path.join(cartoonDir, filename);
+    // Cartoonize the image using Python + OpenCV
+    const cartoonscriptDir = path.join(
+      process.cwd(),
+      "../",
+      "python",
+      "scripts",
+      "catoonizer.py"
+    );
+    console.log(cartoonscriptDir);
+    await AuthService.cartoonizeImage(inputPath, outputPath, cartoonscriptDir);
+
+    const fileUrl = `/public/cartoonized/${filename}`;
+    reply.send({
+      message: "Image cartoonized successfully",
+      url: fileUrl,
+    });
+  } catch (error: any) {
+    console.error("Cartoonization error:", error);
+    reply.status(500).send({
+      error: "Failed to cartoonize image",
+      detail: error.toString(),
+    });
+  }
+};
 // export const logout = async (req: FastifyRequest, reply: FastifyReply) => {
 //   try {
 //     const { deviceToken } = req.body as {

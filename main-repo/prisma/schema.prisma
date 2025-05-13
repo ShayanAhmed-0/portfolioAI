@@ -45,7 +45,7 @@ model UserProfile {
   device             Device[]
   reviews            Reviews[]
   repos              Repos[]
-  git_user           GitUser[]
+  git_user           GitUser?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @default(now()) @updatedAt
 
@@ -92,7 +92,7 @@ model Repos {
 model GitUser {
   id                        String       @id @default(uuid())
   user_profile              UserProfile? @relation(fields: [user_profile_id], references: [id])
-  user_profile_id           String?
+  user_profile_id           String @unique
   login                     String
   avatar_url                String
   html_url                  String

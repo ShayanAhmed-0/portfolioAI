@@ -43,11 +43,12 @@ export const init = async (config: typeof AppConfig) => {
 
   app.register(fastifyMultipart);
   app.register(fastifyIO);
++console.log("Static path:", path.join(__dirname, "../../public/uploads"));
 
-  // console.log(path.join(__dirname, "public/uploads"));
-  app.register(fastifyStatic, {
-    root: path.join(__dirname, "public/uploads"),
-  });
+app.register(fastifyStatic, {
+  root: path.join(__dirname, "../../public/uploads"),
+});
+// C:\Users\EC\OneDrive\Desktop\portfolio-ai\public\uploads\vectorized
 
   logger.info("hello world");
 

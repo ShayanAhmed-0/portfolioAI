@@ -1,7 +1,9 @@
+import { exec } from "child_process";
 import { prismaClient } from "../../../lib/db";
 import { gethashedPass } from "../../../utils/generate-hash";
 import { generateSalt } from "../../../utils/generate-salt";
-
+import fs from 'fs';
+import path from "path";
 export default class AuthService {
   public static getFullAuthByIdAndUserProfile(id: string) {
     return prismaClient.auth.findUnique({
@@ -128,4 +130,25 @@ export default class AuthService {
   //     },
   //   });
   // }
+
+  public static cartoonizeImage = (
+    inputPath: string,
+    outputPath: string,
+    scriptPath: string
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      exec(
+        `python "${scriptPath}" "${inputPath}" "${outputPath}"`,
+        (err, stdout, stderr) => {
+          if (stdout) console.log('Python stdout:', stdout);   // 👈 log Python output
+          if (stderr) console.error('Python stderr:', stderr); // 👈 log Python errors
+  
+          fs.unlink(inputPath, () => {});
+  
+          if (err) return reject(stderr);
+          resolve(outputPath);
+        }
+      );
+    });
+  };
 }

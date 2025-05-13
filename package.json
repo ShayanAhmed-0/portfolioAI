@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "potrace": "^2.1.8",
+    "sharp": "^0.34.1",
+    "trace": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/potrace": "^2.1.5"
+  }
+}

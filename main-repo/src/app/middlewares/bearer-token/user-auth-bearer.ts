@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply, HookHandlerDoneFunction } from "fastify";
 import _ from "lodash";
 import { verifyJWT } from "../../../utils/validation/token";
 import validatedEnv from "../../../config/environmentVariables";
+// import validatedEnv from "../../../config/environmentVariables";
 
 // declare module "fastify" {
 //   interface FastifyRequest {

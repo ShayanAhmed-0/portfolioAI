@@ -1,8 +1,6 @@
 import validatedEnv from "../../../config/environmentVariables";
-import { prismaClient } from "../../../lib/db";
-import { gethashedPass } from "../../../utils/generate-hash";
-import { generateSalt } from "../../../utils/generate-salt";
-import { Octokit } from "@octokit/rest";
+// import { Octokit } from "@octokit/rest";
+
 const CLIENT_ID = validatedEnv.CLIENT_ID;
 const CLIENT_SECRET = validatedEnv.CLIENT_SECRETS;
 export default class GithubService {
@@ -26,7 +24,9 @@ export default class GithubService {
   }
 
   public static async InitilizeOctoKit(accessToken:string){
-    const octokit = new Octokit({ auth: accessToken });
+    const { Octokit } = await import('@octokit/rest'); // Dynamic import
+
+  const octokit = new Octokit({ auth: accessToken });
 
   // Example: Get authenticated user's profile
   const { data: user } = await octokit.rest.users.getAuthenticated();
