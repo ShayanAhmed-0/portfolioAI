@@ -6,22 +6,51 @@ import fs from 'fs';
 import path from "path";
 export default class AuthService {
   public static getFullAuthByIdAndUserProfile(id: string) {
+    // return prismaClient.auth.findUnique({
+    //   where: { id, isDeleted: false },
+    //   include:{
+    //     user_profile:{
+    //       include:{
+    //         avatar:true,
+    //         education:true,
+    //         experience:true,
+    //         git_user:true,
+    //         repos:true,
+    //         reviews:true,
+    //         skills:{
+    //           include:{
+    //             skill:true
+    //           }
+    //         }
+    //       }
+    //     }
+    //   },
+    // });
     return prismaClient.auth.findUnique({
-      where: { id, isDeleted: false },
-      select: {
-        id: true,
-        email: true,
-        user_profile: {
-          select: {
-            id: true,
-            latitude: true,
-            longitude: true,
-            avatar: { select: { url: true } },
-            device: true,
-          },
-        },
-      },
-    });
+  where: { id, isDeleted: false },
+  select: {
+    id: true,
+    email: true,
+    is_profile_completed:true,
+    createdAt: true,
+    updatedAt: true,
+    user_profile: {
+      include: {
+        avatar: true,
+        education: true,
+        experience: true,
+        git_user: true,
+        repos: true,
+        reviews: true,
+        skills: {
+          include: {
+            skill: true
+          }
+        }
+      }
+    }
+  }
+});
   }
 
   public static getFullAuthByEmail(email: string) {

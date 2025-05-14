@@ -39,7 +39,7 @@ model UserProfile {
   longitude          Float?
   latitude           Float?
   location_name          String?
-  skills             Skills[]
+   skills             UserSkill[] 
   allow_notifications Boolean        @default(true)
   Notification       Notification[]
   device             Device[]
@@ -53,6 +53,7 @@ model UserProfile {
 
   @@map("user_profile")
 }
+
 
 model Experience{
   id                 String         @id @default(uuid())
@@ -74,12 +75,22 @@ model Education{
   end_date           String
 }
 
+model UserSkill {
+  id            String      @id @default(uuid())
+  user          UserProfile @relation(fields: [user_id], references: [id])
+  user_id       String
+  skill         Skills       @relation(fields: [skill_id], references: [id])
+  skill_id      String
+  level         Int         @default(0)
+
+  @@unique([user_id, skill_id]) // Prevent duplicate assignment
+  @@map("user_skills")
+}
+
 model Skills {
   id              String       @id @default(uuid())
-  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id])
-  user_profile_id String?
+  users  UserSkill[]
   name            String
-  level           Int          @default(0)
 
   @@map("skills")
 }
