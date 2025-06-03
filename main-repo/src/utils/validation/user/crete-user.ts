@@ -26,11 +26,13 @@ const userSchema = z.object({
   about: z.string().min(1, "About is required"),
   experience: z.array(experienceSchema),
   education: z.array(educationSchema),
+  isVectorized:z.boolean(),
   deviceToken: z
     .string()
     .min(10, "Device token must be between 10 and 200 characters")
     .max(200, "Device token must be between 10 and 200 characters")
     .optional(),
+  
 });
 
 type UserInput = z.infer<typeof userSchema>;

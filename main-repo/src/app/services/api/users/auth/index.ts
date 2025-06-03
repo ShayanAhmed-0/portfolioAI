@@ -22,6 +22,7 @@ import {
   github_callback,
   image_vectorizer,
   image_cartoonizer,
+  save_github_data,
   // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
@@ -463,6 +464,29 @@ const user_auth = async (fastify: FastifyInstance) => {
       // },
     },
     handler: github_callback,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/github/save-data",
+    schema: {
+      // response: {
+      //   200: otherRes,
+      //   404: otherRes,
+      //   409: otherRes,
+      //   500: otherRes,
+      // },
+    },
+     preValidation: user_bearer,
+    handler: save_github_data,
     errorHandler: (
       error: FastifyError,
       req: FastifyRequest,

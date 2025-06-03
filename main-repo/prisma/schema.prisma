@@ -39,12 +39,11 @@ model UserProfile {
   longitude          Float?
   latitude           Float?
   location_name          String?
-   skills             UserSkill[] 
+  skills             UserSkill[] 
   allow_notifications Boolean        @default(true)
   Notification       Notification[]
   device             Device[]
   reviews            Reviews[]
-  repos              Repos[]
   experience         Experience[]
   education          Education[]
   git_user           GitUser?
@@ -97,8 +96,8 @@ model Skills {
 
 model Repos {
   id               String       @id @default(uuid())
-  user_profile     UserProfile? @relation(fields: [user_profile_id], references: [id])
-  user_profile_id  String?
+  git_user     GitUser? @relation(fields: [git_user_id], references: [id])
+  git_user_id  Int?
   name             String
   full_name        String
   private          Boolean
@@ -123,9 +122,10 @@ model Repos {
 }
 
 model GitUser {
-  id                        String       @id @default(uuid())
+  id                        Int       @id
   user_profile              UserProfile? @relation(fields: [user_profile_id], references: [id])
   user_profile_id           String @unique
+  repos Repos[]
   login                     String
   avatar_url                String
   html_url                  String
@@ -141,7 +141,7 @@ model GitUser {
   total_private_repos       Int
   owned_private_repos       Int
   collaborators             Int
-  two_factor_authentication Boolean
+  url String
 
   @@map("git_user")
 }

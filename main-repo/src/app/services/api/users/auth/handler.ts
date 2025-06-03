@@ -194,6 +194,7 @@ interface CreateUserProfileBody {
     endDate: string;
   }>; // Define this array of objects
   deviceType?: "ios" | "android";
+  isVectorized:boolean | string
 }
 export const create_user_profile = async (
   req: FastifyRequest,
@@ -211,6 +212,7 @@ export const create_user_profile = async (
       education: Array.isArray(body.education)
         ? body.education
         : JSON.parse(body.education), // Ensure education is an array
+      isVectorized: body.isVectorized && body.isVectorized==="true"?true:false
     };
     const validation = validateCreateUserProfile(parsedBody);
     console.log(validation);
@@ -227,7 +229,7 @@ export const create_user_profile = async (
     if (!file) {
       throw new CustomError("User Avatar is Required", 400);
     }
-    const { filename } = file as unknown as { filename: any };
+    let { filename } = file as unknown as { filename: any };
     if (!filename) {
       throw new CustomError("User Avatar is Required", 400);
     }
@@ -254,6 +256,7 @@ export const create_user_profile = async (
       experience,
       education,
       deviceToken,
+      isVectorized
       // deviceType,
     } = validation.data;
 
@@ -261,7 +264,13 @@ export const create_user_profile = async (
     if (checkUserName) {
       throw new CustomError("Username Already Exists", 409);
     }
-    const mediaUrl = `/avatar/${filename}`;
+    let mediaUrl = `/avatar/${filename}`;
+    if(isVectorized){
+      const vectorized = await MediaService.VectorizeAvatar(file)
+      mediaUrl= vectorized.fileUrl
+      filename= vectorized.filename
+    }
+
     const createUserProfile = await UserService.createUserProfile(
       checkProfile.id,
       `${firstName} ${lastName}`,
@@ -711,67 +720,34 @@ export const github_callback = async (
       getGithubDetails,
       message: "Github Details Fetced Successfully",
     });
-    // const repoData: Repo[] = getGithubDetails.repos.map((repo: any) => ({
-    //   name: repo.name,
-    //   full_name: repo.full_name,
-    //   private: repo.private,
-    //   html_url: repo.html_url,
-    //   description: repo.description,
-    //   fork: repo.fork,
-    //   created_at: new Date(repo.created_at),
-    //   updated_at: new Date(repo.updated_at),
-    //   pushed_at: new Date(repo.pushed_at),
-    //   homepage: repo.homepage || "",
-    //   stargazers_count: repo.stargazers_count,
-    //   watchers_count: repo.watchers_count,
-    //   language: repo.language || "Unknown",
-    //   forks_count: repo.forks_count.toString(),
-    //   visibility: repo.visibility,
-    //   forks: repo.forks,
-    //   open_issues: repo.open_issues,
-    //   watchers: repo.watchers,
-    //   default_branch: repo.default_branch,
-    // }));
-    // const {
-    //   login,
-    //   avatar_url,
-    //   html_url,
-    //   email,
-    //   hireable,
-    //   bio,
-    //   public_repos,
-    //   public_gists,
-    //   followers,
-    //   following,
-    //   created_at,
-    //   updated_at,
-    //   total_private_repos,
-    //   owned_private_repos,
-    //   collaborators,
-    // } = getGithubDetails.user;
-    // await GithubService.CreateManyRepos(repoData);
-    // await GithubService.CreateGitUser(
-    //   "",
-    //   login,
-    //   avatar_url,
-    //   html_url,
-    //   hireable,
-    //   bio,
-    //   public_repos,
-    //   public_gists,
-    //   followers,
-    //   following,
-    //   created_at,
-    //   updated_at,
-    //   total_private_repos,
-    //   owned_private_repos,
-    //   collaborators,
-    //   false,
-    //   email
-    // );
-
-    // return reply.redirect("http://localhost:3000/shayan");
-    // getGithubDetails.repos.at(0)?.homepage
+  } catch (error: any) {
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
+  }
+};
+export const save_github_data = async (
+  req: FastifyRequest,
+  reply: FastifyReply
+) => {
+  try {
+    const { profileId } = req.user as { profileId: string };
+     const { github_user_id } = req.body as { github_user_id: number };
+    await GithubService.connectGitUserToProfile(profileId,github_user_id);
+    return reply.status(200).send({
+      status: 200,
+      message: "Github Connected Successfully",
+    });
   } catch (error: any) {
     if (error instanceof CustomError) {
       // Handle specific CustomError instances
@@ -798,46 +774,10 @@ export const image_vectorizer = async (
     if (!file) {
       throw new CustomError("User Avatar is Required", 400);
     }
-
-    const inputPath = file.path;
-
-    const buffer = await sharp(inputPath)
-      .resize(1024)
-      .grayscale()
-      .toFormat("png") // Ensure compatibility
-      .toBuffer();
-
-    // Wrap Potrace trace in a Promise
-    const svg: string = await new Promise((resolve, reject) => {
-      trace(buffer, { threshold: 128 }, (err, svg) => {
-        // Cleanup uploaded file
-        fs.unlink(inputPath, () => {}); // Non-blocking deletion
-
-        if (err) {
-          return reject(err);
-        }
-        resolve(svg);
-      });
-    });
-    const outputDir = path.join(
-      process.cwd(),
-      "../public/uploads",
-      "vectorized"
-    );
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-    const filename = `vector-${uuidv4()}.svg`;
-    const outputPath = path.join(outputDir, filename);
-
-    // Save SVG to disk
-    fs.writeFileSync(outputPath, svg);
-
-    // Return the relative path or full URL (e.g., if using static file serving)
-    const fileUrl = `/vectorized/${filename}`;
+    const vectorized = await MediaService.VectorizeAvatar(file);
     reply.send({
       message: "Image vectorized successfully",
-      url: fileUrl,
+      url: vectorized.fileUrl,
     });
   } catch (error: any) {
     console.error("Vectorization error:", error);

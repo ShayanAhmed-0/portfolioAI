@@ -2,7 +2,7 @@ import { exec } from "child_process";
 import { prismaClient } from "../../../lib/db";
 import { gethashedPass } from "../../../utils/generate-hash";
 import { generateSalt } from "../../../utils/generate-salt";
-import fs from 'fs';
+import fs from "fs";
 import path from "path";
 export default class AuthService {
   public static getFullAuthByIdAndUserProfile(id: string) {
@@ -27,30 +27,33 @@ export default class AuthService {
     //   },
     // });
     return prismaClient.auth.findUnique({
-  where: { id, isDeleted: false },
-  select: {
-    id: true,
-    email: true,
-    is_profile_completed:true,
-    createdAt: true,
-    updatedAt: true,
-    user_profile: {
-      include: {
-        avatar: true,
-        education: true,
-        experience: true,
-        git_user: true,
-        repos: true,
-        reviews: true,
-        skills: {
+      where: { id, isDeleted: false },
+      select: {
+        id: true,
+        email: true,
+        is_profile_completed: true,
+        createdAt: true,
+        updatedAt: true,
+        user_profile: {
           include: {
-            skill: true
-          }
-        }
-      }
-    }
-  }
-});
+            avatar: true,
+            education: true,
+            experience: true,
+            git_user: {
+              include:{
+                repos:true
+              }
+            },
+            reviews: true,
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   public static getFullAuthByEmail(email: string) {
@@ -88,11 +91,11 @@ export default class AuthService {
       include: { user_profile: true },
     });
   }
-  public static checkExistingUserName(user_name:string) {
+  public static checkExistingUserName(user_name: string) {
     return prismaClient.userProfile.findUnique({
       where: {
         user_name,
-      }
+      },
     });
   }
   public static checkExistingProfile(email: string) {
@@ -100,10 +103,7 @@ export default class AuthService {
       where: { email },
     });
   }
-  public static createUser(
-    email: string,
-    password: string,
-  ) {
+  public static createUser(email: string, password: string) {
     const salt = generateSalt();
     const hashedPassword = gethashedPass(salt, password);
     return prismaClient.auth.create({
@@ -170,11 +170,11 @@ export default class AuthService {
       exec(
         `python "${scriptPath}" "${inputPath}" "${outputPath}"`,
         (err, stdout, stderr) => {
-          if (stdout) console.log('Python stdout:', stdout);   // 👈 log Python output
-          if (stderr) console.error('Python stderr:', stderr); // 👈 log Python errors
-  
+          if (stdout) console.log("Python stdout:", stdout); // 👈 log Python output
+          if (stderr) console.error("Python stderr:", stderr); // 👈 log Python errors
+
           fs.unlink(inputPath, () => {});
-  
+
           if (err) return reject(stderr);
           resolve(outputPath);
         }
