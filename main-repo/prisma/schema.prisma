@@ -43,10 +43,13 @@ model UserProfile {
   allow_notifications Boolean        @default(true)
   Notification       Notification[]
   device             Device[]
-  reviews            Reviews[]
+  reviews            Reviews[]       @relation("Reviewer")
+  reviews_received   Reviews[]       @relation("ReviewedUser")
   experience         Experience[]
   education          Education[]
   git_user           GitUser?
+  chats              Chat[]          @relation("ChatParticipants")
+  messages           Message[]
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @default(now()) @updatedAt
 
@@ -124,7 +127,7 @@ model Repos {
 model GitUser {
   id                        Int       @id
   user_profile              UserProfile? @relation(fields: [user_profile_id], references: [id])
-  user_profile_id           String @unique
+  user_profile_id           String? @unique
   repos Repos[]
   login                     String
   avatar_url                String
@@ -154,6 +157,8 @@ model Media {
   user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
   user_profile_id String?      @unique
   reviews         Reviews[]
+  chat            Chat?        @relation(fields: [chat_id], references: [id])
+  chat_id         String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @default(now()) @updatedAt
 
@@ -162,8 +167,10 @@ model Media {
 
 model Reviews {
   id              String       @id @default(uuid())
-  user_profile    UserProfile? @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
-  user_profile_id String?      @unique
+  user_profile    UserProfile? @relation("Reviewer", fields: [user_profile_id], references: [id], onDelete: Cascade)
+  user_profile_id String?      
+  review_for    UserProfile? @relation("ReviewedUser", fields: [review_for_id], references: [id], onDelete: Cascade)
+  review_for_id String?      
   review          String
   rating          Int
   images          Media[]
@@ -195,4 +202,29 @@ model Notification {
   updatedAt       DateTime     @updatedAt
 
   @@map("notification")
+}
+
+model Chat {
+  id              String       @id @default(uuid())
+  participants    UserProfile[] @relation("ChatParticipants")
+  messages        Message[]
+  media           Media[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("chats")
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  content         String
+  chat            Chat         @relation(fields: [chat_id], references: [id])
+  chat_id         String
+  sender          UserProfile  @relation(fields: [sender_id], references: [id])
+  sender_id       String
+  is_read         Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("messages")
 }

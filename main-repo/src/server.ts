@@ -7,10 +7,11 @@ import fastifyMultipart, { FastifyMultipartOptions } from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import formBodyPlugin from "@fastify/formbody";
 import { Server as SocketIO } from "socket.io";
-// import my_socket from "./app/services/Chat";
+// import ChatService from "./app/services/Chat/chat-service";
 import logger from "./logger/logger";
 import AppConfig from "./config/environmentVariables";
 import routes from "./app/routes";
+import ChatService from "./app/services/Chat/chat-service";
 // import { producer } from "./lib/kafka";
 // import { producer } from "./lib/kafka";
 
@@ -43,12 +44,12 @@ export const init = async (config: typeof AppConfig) => {
 
   app.register(fastifyMultipart);
   app.register(fastifyIO);
-+console.log("Static path:", path.join(__dirname, "../../public/uploads"));
+  console.log("Static path:", path.join(__dirname, "../../public/uploads"));
 
-app.register(fastifyStatic, {
-  root: path.join(__dirname, "../../public/uploads"),
-});
-// C:\Users\EC\OneDrive\Desktop\portfolio-ai\public\uploads\vectorized
+  app.register(fastifyStatic, {
+    root: path.join(__dirname, "../../public/uploads"),
+  });
+  // C:\Users\EC\OneDrive\Desktop\portfolio-ai\public\uploads\vectorized
 
   logger.info("hello world");
 
@@ -65,12 +66,18 @@ app.register(fastifyStatic, {
   //   exposedHeaders: "Content-Disposition",
   // });
   app.register(fastifyCors, {
-  origin: true, // Allows all origins
-  methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Disposition'],
-  credentials: true, // Optional: if you support cookies or auth headers
-});
+    origin: true, // Allows all origins
+    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Disposition'],
+    credentials: true, // Optional: if you support cookies or auth headers
+  });
+
+  // Initialize Socket.IO
+  app.ready().then(() => {
+    ChatService.initializeSocket(app.io);
+    logger.info("Socket.IO initialized successfully");
+  });
 
   app.register(routes);
 

@@ -2,22 +2,9 @@ import { z } from "zod";
 
 // Define the schema for user data validation
 const giveReviewSchema = z.object({
-  orderId: z.string().uuid({
-    message: "orderId is required",
-  }),
-  rating: z.union([
-    z.string().min(1, "Rating is required"),
-    z.number().refine((value) => value >= 1, {
-      message: "Rating is required",
-    }),
-  ]),
-  review: z.string().optional(),
-  orderType: z
-    .enum(["order", "serviceRequest"])
-    .refine(
-      (value) => value !== null,
-      "Invalid value type should be order,serviceRequest"
-    ),
+  profileId: z.string(),
+    review: z.string(),
+    rating: z.number().min(1).max(5),
 });
 
 // Type inference from the schema
