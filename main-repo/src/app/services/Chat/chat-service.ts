@@ -32,6 +32,33 @@ class ChatService {
 
   public static async createChat(participantIds: string[]) {
     try {
+      // First, try to find an existing chat with the same participants
+      const existingChat = await prisma.chat.findFirst({
+        where: {
+          participants: {
+            every: {
+              id: {
+                in: participantIds
+              }
+            }
+          }
+        },
+        include: {
+          participants: {
+            select:{
+              avatar:true,
+              full_name:true,
+              user_name:true
+            }
+          }
+        }
+      });
+
+      // If chat exists, return it; otherwise create a new one
+      if (existingChat) {
+        return existingChat;
+      }
+
       const chat = await prisma.chat.create({
         data: {
           participants: {

@@ -141,58 +141,6 @@ const user_setting = async (fastify: FastifyInstance) => {
         .send({ message: error.message, status: error.statusCode });
     },
   });
-  // fastify.route({
-  //   method: "GET",
-  //   url: "/my-cards",
-  //   schema: {
-  //     headers: authheaders,
-  //   },
-  //   handler: myCards,
-  //   preValidation: user_bearer,
-  //   errorHandler: (
-  //     error: FastifyError,
-  //     req: FastifyRequest,
-  //     reply: FastifyReply
-  //   ) => {
-  //     return reply
-  //       .status(error.statusCode!)
-  //       .send({ message: error.message, status: error.statusCode });
-  //   },
-  // });
-  // fastify.route({
-  //   method: "POST",
-  //   url: "/add-card",
-  //   schema: {
-  //     headers: authheaders,
-  //     body: {
-  //       type: "object",
-  //       properties: {
-  //         cardNumber: { type: "string" },
-  //         name: { type: "string" },
-  //         expiryDate: { type: "string" },
-  //         CVV: { type: "string" },
-  //       },
-  //       required: ["cardNumber", "name", "expiryDate", "CVV"],
-  //     },
-  //     response: {
-  //       200: otherRes,
-  //       400: otherRes,
-  //       409: otherRes,
-  //       500: otherRes,
-  //     },
-  //   },
-  //   handler: addCard,
-  //   preValidation: user_bearer,
-  //   errorHandler: (
-  //     error: FastifyError,
-  //     req: FastifyRequest,
-  //     reply: FastifyReply
-  //   ) => {
-  //     return reply
-  //       .status(error.statusCode!)
-  //       .send({ message: error.message, status: error.statusCode });
-  //   },
-  // });
 };
 
 export default user_setting;

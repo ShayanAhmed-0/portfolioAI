@@ -1,6 +1,8 @@
 // import seeder from "./services/api/seeder";
 import chats from "./services/api/chat";
 import lovs from "./services/api/lovs";
+import portfolios from "./services/api/portfolio";
+import portfoilios from "./services/api/portfolio";
 import reviews from "./services/api/reviews";
 import user_auth from "./services/api/users/auth";
 import user_profile from "./services/api/users/profile";
@@ -12,6 +14,7 @@ export default async (fastify: any) => {
   fastify.register(user_profile, { prefix: `${apiPrefix}/user/profile` });
   fastify.register(reviews, { prefix: `${apiPrefix}/user/reviews` });
   fastify.register(chats, { prefix: `${apiPrefix}/user/chats` });
+  fastify.register(portfolios, { prefix: `${apiPrefix}/portfolio` });
   fastify.register(lovs, { prefix: `${apiPrefix}/lovs` });
   
 

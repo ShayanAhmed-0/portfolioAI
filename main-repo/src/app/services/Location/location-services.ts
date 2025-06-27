@@ -55,7 +55,9 @@ export default class LocationService {
         longitude,
         latitude,
         radius,
-        "km"
+        "km",
+        "WITHCOORD",
+        "WITHDIST"
       );
       return locations;
     } catch (error) {

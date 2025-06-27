@@ -10,7 +10,7 @@ import user_auth_bearer from "../../../../middlewares/bearer-token/user-auth-bea
 import { avatar_multipart } from "../../../../middlewares/multipart/avatar-multipart";
 import user_bearer from "../../../../middlewares/bearer-token/user-bearer";
 import CustomError from "../../../../../utils/custom-response/custom-error";
-import {  get_profile } from "./handler";
+import {  change_repo_visibility, change_status, get_others_profile, get_profile, update_user_profile } from "./handler";
 // import formBody from "fastify-formbody";
 
 const upload = multer({ dest: "uploads/" });
@@ -35,6 +35,24 @@ const user_profile = async (fastify: FastifyInstance) => {
   fastify.route({
     method: "GET",
     url: "/get-profile",
+    schema: {
+      headers: authheaders,
+    },
+    handler: get_profile,
+    preValidation: user_bearer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/chage-status",
     schema: {
       headers: authheaders,
       response: {
@@ -96,7 +114,120 @@ const user_profile = async (fastify: FastifyInstance) => {
         // 500: otherRes,
       },
     },
-    handler: get_profile,
+    handler: change_status,
+    preValidation: user_bearer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/update",
+    schema: {
+      headers: authheaders,
+    
+    },
+    handler: update_user_profile,
+    preValidation: user_bearer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "GET",
+    url: "/get-others-profile/:username",
+    schema: {
+      // headers: authheaders,
+    },
+    handler: get_others_profile,
+    // preValidation: user_bearer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/change-repo-visibility",
+    schema: {
+      headers: authheaders,
+      response: {
+        // 200: {
+        //   type: "object",
+        //   properties: {
+        //     data: {
+        //       type: "object",
+        //       properties: {
+        //         id: { type: "string" },
+        //         email: { type: "string" },
+        //         role: { type: "string" },
+        //         userProfile: {
+        //           type: "object",
+        //           properties: {
+        //             id: { type: "string" },
+        //             firstName: { type: "string" },
+        //             lastName: { type: "string" },
+        //             phone: { type: "string" },
+        //             age: { type: "number" },
+        //             gender: { type: "string" },
+        //             longitude: { type: "number" },
+        //             latitude: { type: "number" },
+        //             cuisineTypes: { type: "array" },
+        //             dietaryRestrictions: { type: "array" },
+        //             preferences: { type: "array" },
+        //             avatar: {
+        //               type: "object",
+        //               properties: {
+        //                 url: { type: "string" },
+        //               },
+        //               required: ["url"],
+        //             },
+        //           },
+        //           required: [
+        //             "id",
+        //             "firstName",
+        //             "lastName",
+        //             "phone",
+        //             "age",
+        //             "gender",
+        //             "longitude",
+        //             "latitude",
+        //             "cuisineTypes",
+        //             "dietaryRestrictions",
+        //             "preferences",
+        //           ],
+        //         },
+        //       },
+        //       required: ["id", "email", "role", "userProfile"],
+        //     },
+        //     message: { type: "string" },
+        //     status: { type: "number" },
+        //   },
+        //   required: ["data", "message", "status"],
+        // },
+        // 400: otherRes,
+        // 409: otherRes,
+        // 500: otherRes,
+      },
+    },
+    handler: change_repo_visibility,
     preValidation: user_bearer,
     errorHandler: (
       error: FastifyError,

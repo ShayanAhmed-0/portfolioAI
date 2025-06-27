@@ -24,6 +24,32 @@ import path from "path";
 interface GithubCallbackQuery {
   code: string;
 }
+export interface CreateUserProfileBody {
+  username: string;
+  firstName: string;
+  lastName: string;
+  professional_title: string;
+  latitude: number;
+  longitude: number;
+  location_name: string;
+  skills: string[];
+  about: string;
+  experience: Array<{
+    company: string;
+    position: string;
+    startDate: string;
+    endDate: string;
+    description: string | null;
+  }>; // Define this array of objects
+  education: Array<{
+    institution: string;
+    degree: string;
+    startDate: string;
+    endDate: string;
+  }>; // Define this array of objects
+  deviceType?: "ios" | "android";
+  isVectorized:boolean | string
+}
 export const signup = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
     // console.log(req.body.email);
@@ -170,32 +196,7 @@ export const resend_signup_otp = async (
     }
   }
 };
-interface CreateUserProfileBody {
-  username: string;
-  firstName: string;
-  lastName: string;
-  professional_title: string;
-  latitude: number;
-  longitude: number;
-  location_name: string;
-  skills: string[];
-  about: string;
-  experience: Array<{
-    company: string;
-    position: string;
-    startDate: string;
-    endDate: string;
-    description: string | null;
-  }>; // Define this array of objects
-  education: Array<{
-    institution: string;
-    degree: string;
-    startDate: string;
-    endDate: string;
-  }>; // Define this array of objects
-  deviceType?: "ios" | "android";
-  isVectorized:boolean | string
-}
+
 export const create_user_profile = async (
   req: FastifyRequest,
   reply: FastifyReply
@@ -711,15 +712,19 @@ export const github_callback = async (
 ) => {
   try {
     const code = req.query.code;
+    
     const getAccessToken = await GithubService.generateAccessToken(code);
     const getGithubDetails = await GithubService.InitilizeOctoKit(
       getAccessToken
     );
-    return reply.status(200).send({
-      status: 200,
-      getGithubDetails,
-      message: "Github Details Fetced Successfully",
-    });
+    // Save the github details in a .txt file
+  
+    reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+    // return reply.status(200).send({
+    //   status: 200,
+    //   getGithubDetails,
+    //   message: "Github Details Fetced Successfully",
+    // });
   } catch (error: any) {
     if (error instanceof CustomError) {
       // Handle specific CustomError instances
@@ -743,9 +748,10 @@ export const save_github_data = async (
   try {
     const { profileId } = req.user as { profileId: string };
      const { github_user_id } = req.body as { github_user_id: number };
-    await GithubService.connectGitUserToProfile(profileId,github_user_id);
+    const data=await GithubService.connectGitUserToProfile(profileId,github_user_id);
     return reply.status(200).send({
       status: 200,
+      data,
       message: "Github Connected Successfully",
     });
   } catch (error: any) {
@@ -836,6 +842,35 @@ export const image_cartoonizer = async (
       error: "Failed to cartoonize image",
       detail: error.toString(),
     });
+  }
+};
+export const save_userpage = async (
+  req: FastifyRequest,
+  reply: FastifyReply
+) => {
+  try {
+    const { profileId } = req.user as { profileId: string };
+    const { userpage } = req.body as { userpage: string };
+    const updateUserPage = await AuthService.updateUserPage(profileId, userpage);
+    return reply.status(200).send({
+      status: 200,
+      data: updateUserPage,
+      message: "User Page Updated Successfully",
+    });
+  } catch (error: any) {  
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
   }
 };
 // export const logout = async (req: FastifyRequest, reply: FastifyReply) => {

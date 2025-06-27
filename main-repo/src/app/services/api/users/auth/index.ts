@@ -23,6 +23,7 @@ import {
   image_vectorizer,
   image_cartoonizer,
   save_github_data,
+  save_userpage,
   // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
@@ -56,6 +57,7 @@ const user_auth = async (fastify: FastifyInstance) => {
   fastify.decorateRequest("user", null);
   fastify.decorateRequest("file", null);
   fastify.decorateRequest("files", null);
+
 
   //signup
   fastify.route({
@@ -474,6 +476,7 @@ const user_auth = async (fastify: FastifyInstance) => {
         .send({ message: error.message, status: error.statusCode });
     },
   });
+
   fastify.route({
     method: "POST",
     url: "/github/save-data",
@@ -485,7 +488,7 @@ const user_auth = async (fastify: FastifyInstance) => {
       //   500: otherRes,
       // },
     },
-     preValidation: user_bearer,
+    preValidation: user_bearer,
     handler: save_github_data,
     errorHandler: (
       error: FastifyError,
@@ -533,6 +536,29 @@ const user_auth = async (fastify: FastifyInstance) => {
     },
     preHandler: avatar_multipart.single("image"),
     handler: image_cartoonizer,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  fastify.route({
+    method: "POST",
+    url: "/save-userpage",
+    schema: {
+      response: {
+        // 200: otherRes,
+        // 404: otherRes,
+        // 409: otherRes,
+        // 500: otherRes,
+      },
+    },
+    preValidation: user_bearer,
+    handler: save_userpage,
     errorHandler: (
       error: FastifyError,
       req: FastifyRequest,

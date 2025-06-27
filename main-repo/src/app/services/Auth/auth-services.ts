@@ -5,6 +5,12 @@ import { generateSalt } from "../../../utils/generate-salt";
 import fs from "fs";
 import path from "path";
 export default class AuthService {
+  public static updateUserPage(profileId: string, userpage: string) {
+    return prismaClient.userProfile.update({
+      where: { id: profileId },
+      data: { userpage },
+    });
+  }
   public static getFullAuthByIdAndUserProfile(id: string) {
     // return prismaClient.auth.findUnique({
     //   where: { id, isDeleted: false },
@@ -28,6 +34,56 @@ export default class AuthService {
     // });
     return prismaClient.auth.findUnique({
       where: { id, isDeleted: false },
+      select: {
+        id: true,
+        email: true,
+        is_profile_completed: true,
+        createdAt: true,
+        updatedAt: true,
+        user_profile: {
+          include: {
+            avatar: true,
+            education: true,
+            experience: true,
+            git_user: {
+              include:{
+                repos:true
+              }
+            },
+            reviews: true,
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+  public static getOthersProfile(username: string) {
+    // return prismaClient.auth.findUnique({
+    //   where: { id, isDeleted: false },
+    //   include:{
+    //     user_profile:{
+    //       include:{
+    //         avatar:true,
+    //         education:true,
+    //         experience:true,
+    //         git_user:true,
+    //         repos:true,
+    //         reviews:true,
+    //         skills:{
+    //           include:{
+    //             skill:true
+    //           }
+    //         }
+    //       }
+    //     }
+    //   },
+    // });
+    return prismaClient.auth.findFirst({
+      where: { user_profile: { user_name: username }, isDeleted: false },
       select: {
         id: true,
         email: true,

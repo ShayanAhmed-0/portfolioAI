@@ -1,3 +1,4 @@
+import { UserStatus } from "@prisma/client";
 import validatedEnv from "../../../config/environmentVariables";
 import { prismaClient } from "../../../lib/db";
 // import { Octokit } from "@octokit/rest";
@@ -56,6 +57,7 @@ export default class GithubService {
 
     // Example: Get authenticated user's profile
     const { data: user } = await octokit.rest.users.getAuthenticated();
+        console.log(user);
     await GithubService.CreateGitUser(
      user.id,
      user.login,
@@ -76,7 +78,25 @@ export default class GithubService {
      user.url
 
     );
-    const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser();
+    const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
+      per_page: 100,
+      page: 1
+    });
+    
+    let allRepos = [...repos];
+    let page = 2;
+    
+    while (repos.length === 100) {
+      const { data: nextPageRepos } = await octokit.rest.repos.listForAuthenticatedUser({
+        per_page: 100,
+        page: page
+      });
+      allRepos = [...allRepos, ...nextPageRepos];
+      page++;
+      
+      if (nextPageRepos.length < 100) break;
+    }
+    // console.log(repos);
     const mappedRepos = repos.map((repo: any) => ({
       git_user_id:user.id,
       name: repo.name,
@@ -102,16 +122,41 @@ export default class GithubService {
 
     await GithubService.CreateManyRepos(mappedRepos);
 
+    const fs = require('fs');
+    const path = require('path');
+    const dataToSave = JSON.stringify({
+      user,
+      repos,
+    }, null, 2);
+    const filePath = path.join(__dirname, 'github_details.txt');
+    console.log(filePath);
+    fs.writeFileSync(filePath, dataToSave, 'utf8');
+
     return {
       user,
       repos,
     };
   }
   public static async CreateManyRepos(repoData: Repo[]) {
-    return await prismaClient.repos.createMany({
+    // Insert repos, then remove duplicates after insertion
+    const result = await prismaClient.repos.createMany({
       data: repoData,
-      skipDuplicates: true, // optional, avoids inserting duplicates
+      skipDuplicates: true, // still try to avoid obvious duplicates
     });
+
+    // Remove duplicates after insertion
+    // Assuming 'full_name' is a unique identifier for a repo per user
+    // This query keeps the repo with the smallest id for each (git_user_id, full_name) pair
+    await prismaClient.$executeRawUnsafe(`
+      DELETE FROM "repos"
+      WHERE id NOT IN (
+        SELECT MIN(id)
+        FROM "repos"
+        GROUP BY "git_user_id", "full_name"
+      )
+    `);
+
+    return result;
   }
 
   public static async CreateGitUser(
@@ -133,6 +178,14 @@ export default class GithubService {
     collaborators: number,
     url:string
   ) {
+    const checkUser = await prismaClient.gitUser.findUnique({
+      where:{
+        id:id
+      }
+    })
+    if(checkUser){
+      return checkUser;
+    }
     return await prismaClient.gitUser.create({
       data: {
         id,
@@ -169,7 +222,40 @@ export default class GithubService {
             id:githubUserId
           }
         }
+      },
+      include:{
+        git_user:{
+          include:{
+            repos: true
+          }
       }
-    })
+    }
+  }
+  )
+  }
+  public static async updateRepoVisibility(
+    profileId:string,
+    repoId:string,
+    status:UserStatus,
+  ) {
+    return await prismaClient.repos.update({
+      where:{
+        id:repoId,
+        git_user:{
+          user_profile_id:profileId
+        }
+      },
+      data:{
+        status:status
+      },
+      include:{
+        git_user:{
+          include:{
+            repos: true
+          }
+      }
+    }
+  }
+  )
   }
 }
