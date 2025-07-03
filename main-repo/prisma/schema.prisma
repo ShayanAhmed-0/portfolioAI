@@ -1,6 +1,10 @@
 generator client {
   provider = "prisma-client-js"
 }
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.pdf"
+}
 
 datasource db {
   provider = "postgresql"
@@ -35,11 +39,11 @@ model UserProfile {
   id                 String         @id @default(uuid())
   auth               Auth           @relation(fields: [auth_id], references: [id])
   auth_id            String         @unique
-  full_name          String
-  user_name          String         @unique
+  full_name          String?
+  user_name          String?         @unique
   professional_title String?
   avatar             Media?
-  about              String
+  about              String?
   longitude          Float?
   latitude           Float?
   location_name      String?
@@ -53,6 +57,7 @@ model UserProfile {
   experience         Experience[]
   education          Education[]
   git_user           GitUser?
+  views              Int            @default(0)
   chats              Chat[]          @relation("ChatParticipants")
   messages           Message[]
   createdAt          DateTime       @default(now())
@@ -98,7 +103,7 @@ model UserSkill {
 model Skills {
   id              String       @id @default(uuid())
   users  UserSkill[]
-  name            String
+  name            String       @unique
 
   @@map("skills")
 }

@@ -16,11 +16,13 @@ class ChatService {
     this.io.on('connection', (socket) => {
       console.log('User connected:', socket.id);
 
-      socket.on('join_chat', (chatId: string) => {
+      socket.on('join_chat', ({chatId}:{chatId:string}) => {
         socket.join(chatId);
+        console.log(`Socket ${socket.id} joined chat ${chatId}`);
+
       });
 
-      socket.on('leave_chat', (chatId: string) => {
+      socket.on('leave_chat', ({chatId}:{chatId:string}) => {
         socket.leave(chatId);
       });
 
@@ -71,11 +73,12 @@ class ChatService {
       });
       return chat;
     } catch (error) {
+      console.log(error);
       throw new CustomError("Failed to create chat", 400);
     }
   }
 
-  public static async sendMessage(chatId: string, senderId: string, content: string, mediaArray: { url: string; name: string }[]) {
+  public static async sendMessage(chatId: string, senderId: string, content: string, mediaArray?: { url: string; name: string }[]) {
     try {
       const message = await prisma.message.create({
         data: {
@@ -109,6 +112,7 @@ class ChatService {
 
       return message;
     } catch (error) {
+      console.log(error);
       throw new CustomError("Failed to send message", 400);
     }
   }

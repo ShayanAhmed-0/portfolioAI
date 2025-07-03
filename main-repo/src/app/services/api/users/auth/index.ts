@@ -24,6 +24,8 @@ import {
   image_cartoonizer,
   save_github_data,
   save_userpage,
+  check_username,
+  github_refetch,
   // logout,
 } from "./handler";
 import multer from "fastify-multer"; // or import multer from 'fastify-multer'
@@ -183,6 +185,26 @@ const user_auth = async (fastify: FastifyInstance) => {
       req: FastifyRequest,
       reply: FastifyReply
     ) => {
+      console.log(error);
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+  // check-username;
+  fastify.route({
+    method: "POST",
+    url: "/check-username",
+    // schema: {
+    //   headers: authheaders,
+    // },
+    handler: check_username,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      console.log(error);
       return reply
         .status(error.statusCode!)
         .send({ message: error.message, status: error.statusCode });
@@ -559,6 +581,22 @@ const user_auth = async (fastify: FastifyInstance) => {
     },
     preValidation: user_bearer,
     handler: save_userpage,
+    errorHandler: (
+      error: FastifyError,
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      return reply
+        .status(error.statusCode!)
+        .send({ message: error.message, status: error.statusCode });
+    },
+  });
+
+  fastify.route({
+    method: "GET",
+    url: "/github/refetch",
+    preValidation: user_bearer,
+    handler: github_refetch,
     errorHandler: (
       error: FastifyError,
       req: FastifyRequest,

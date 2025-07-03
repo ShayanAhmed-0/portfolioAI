@@ -49,6 +49,7 @@
     "@types/nodemailer": "^6.4.14",
     "@types/socket.io": "^3.0.2",
     "@types/uuid": "^9.0.8",
+    "prisma-erd-generator": "^2.0.4",
     "ts-node": "^10.9.2",
     "tsc-watch": "^6.2.0",
     "typescript": "^5.4.5"

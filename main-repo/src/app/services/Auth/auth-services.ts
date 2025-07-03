@@ -61,7 +61,7 @@ export default class AuthService {
       },
     });
   }
-  public static getOthersProfile(username: string) {
+  public static async getOthersProfile(username: string) {
     // return prismaClient.auth.findUnique({
     //   where: { id, isDeleted: false },
     //   include:{
@@ -82,7 +82,8 @@ export default class AuthService {
     //     }
     //   },
     // });
-    return prismaClient.auth.findFirst({
+    username=username.toLowerCase()
+    const user= await prismaClient.auth.findFirst({
       where: { user_profile: { user_name: username }, isDeleted: false },
       select: {
         id: true,
@@ -96,8 +97,14 @@ export default class AuthService {
             education: true,
             experience: true,
             git_user: {
-              include:{
-                repos:true
+              select:{
+                url:true,
+                html_url:true,
+                repos:{
+                  where:{
+                    status: "public"
+                  }
+                }
               }
             },
             reviews: true,
@@ -110,6 +117,20 @@ export default class AuthService {
         },
       },
     });
+    if (user?.user_profile?.id) {
+      await prismaClient.userProfile.update({
+        where: {
+          id: user.user_profile.id,
+        },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
+    return user
   }
 
   public static getFullAuthByEmail(email: string) {
@@ -148,6 +169,7 @@ export default class AuthService {
     });
   }
   public static checkExistingUserName(user_name: string) {
+    user_name=user_name.toLowerCase()
     return prismaClient.userProfile.findUnique({
       where: {
         user_name,
@@ -237,4 +259,22 @@ export default class AuthService {
       );
     });
   };
+
+  public static async getUserByGitCode(code:number){
+    const a =await prismaClient.auth.findFirst({
+      where:{
+        user_profile:{
+          git_user:{
+            id:code
+          }
+        }
+      },
+      select:{
+        is_profile_completed:true,
+        user_profile:true
+      }
+    })
+    console.log(a)
+    return a
+  }
 }

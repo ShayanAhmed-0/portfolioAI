@@ -8,25 +8,23 @@ export const create_review=async(req: FastifyRequest,
   reply: FastifyReply)=>
   {
     try {
-      const user = req.user;
-      // const { profileId } = req.params as { profileId: string };
+      const {profileId} = req.user;
       const {errors,success,data} = validateGiveReview(req.body);
       if(errors){
         return reply.code(400).send({ error: errors });
       }
-
-
-      // Check if user has already reviewed this profile
-      const existingReview = await ReviewService.createReview(user.id,data.profileId,data.review,data.rating)
-
+      const existingReview = await ReviewService.findExisting(profileId,data.profileId)
 
       if (existingReview) {
-        return reply.code(400).send({ error: "You have already reviewed this profile" });
+        throw new CustomError("You have already reviewed this profile", 400);
       }
+
+      // Check if user has already reviewed this profile
+      const Review = await ReviewService.createReview(profileId,data.profileId,data.review,data.rating)
 
     
       return reply.status(200).send({
-        data:{review:existingReview},
+        data:{review:Review},
         status: 200,
         message: "Review Created Successfully",
       });
@@ -48,14 +46,13 @@ export const create_review=async(req: FastifyRequest,
   }
 export const get_reviews = async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user = req.user;
+      // const user = req.user;
       const { profileId } = req.params as { profileId: string };
-      const { self = false, page = 1, limit = 10 } = req.query as { self?: boolean; page?: number; limit?: number };
+      const { self = false, page = 1, limit = 10 } = req.query as { self?: boolean|string; page?: number; limit?: number };
 
       let reviews;
       if (self) {
-        // Get reviews written by the user
-        reviews = await ReviewService.getUserReviews(user.id, page, limit);
+        reviews = await ReviewService.getUserReviews(profileId);
       } else {
         // Get reviews for a specific profile
         reviews = await ReviewService.getProfileReviews(profileId);

@@ -4,14 +4,20 @@ const experienceSchema = z.object({
   company: z.string(),
   position: z.string(),
   startDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
-  endDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
+  endDate: z.union([
+    z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
+    z.literal("Present")
+  ]),
   description: z.string().nullable(), // or use z.null() if only null is allowed
 });
 const educationSchema = z.object({
   institution: z.string(),
   degree: z.string(),
   startDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
-  endDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
+  endDate: z.union([
+    z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Invalid date format (dd/mm/yyyy)"),
+    z.literal("Present")
+  ]),
 });
 
 const userSchema = z.object({
@@ -21,12 +27,13 @@ const userSchema = z.object({
   professional_title: z.string().min(1, "Professional title is required"),
   latitude: z.number().min(-90).max(90), 
   longitude: z.number().min(-180).max(180),
+  gitUserId: z.string().optional(),
   location_name: z.string().min(1, "location_name is required"),
   skills: z.array(z.string()),
   about: z.string().min(1, "About is required"),
-  experience: z.array(experienceSchema),
-  education: z.array(educationSchema),
-  isVectorized:z.boolean(),
+  experience: z.array(experienceSchema).optional(),
+  education: z.array(educationSchema).optional(),
+  isVectorized:z.boolean().optional(),
   deviceToken: z
     .string()
     .min(10, "Device token must be between 10 and 200 characters")

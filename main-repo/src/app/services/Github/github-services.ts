@@ -33,6 +33,7 @@ export default class GithubService {
     return redirectUrl;
   }
   public static async generateAccessToken(code: string) {
+    console.log( CLIENT_ID,CLIENT_SECRET,code)
     const tokenRes = await fetch(
       "https://github.com/login/oauth/access_token",
       {
@@ -45,6 +46,8 @@ export default class GithubService {
         }),
       }
     );
+    console.log(tokenRes)
+    
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
     return accessToken;

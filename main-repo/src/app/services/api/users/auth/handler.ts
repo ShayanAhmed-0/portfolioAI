@@ -135,6 +135,7 @@ export const signup_otp = async (req: FastifyRequest, reply: FastifyReply) => {
       req.user.email,
       req.user.password
     );
+    await UserService.createProfileOnly(user.id)
     return reply
       .status(200)
       .send({ data: user, message: "User Signedup Successfully", status: 200 });
@@ -222,7 +223,7 @@ export const create_user_profile = async (
         status: 400,
         message: "Valdation Errors",
         data: validation.errors,
-      });
+     });
 
     const { email } = req.user as { email: string; id: string };
 
@@ -257,7 +258,8 @@ export const create_user_profile = async (
       experience,
       education,
       deviceToken,
-      isVectorized
+      isVectorized,
+      gitUserId
       // deviceType,
     } = validation.data;
 
@@ -267,7 +269,7 @@ export const create_user_profile = async (
     }
     let mediaUrl = `/avatar/${filename}`;
     if(isVectorized){
-      const vectorized = await MediaService.VectorizeAvatar(file)
+      const vectorized = await MediaService.VectorizeAvatar(file,true)
       mediaUrl= vectorized.fileUrl
       filename= vectorized.filename
     }
@@ -282,10 +284,10 @@ export const create_user_profile = async (
       longitude,
       latitude,
       location_name,
+      mediaUrl,
+      filename,
       experience,
       education,
-      mediaUrl,
-      filename
     );
     if (!createUserProfile)
       throw new CustomError("error creating profile", 400);
@@ -359,6 +361,12 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
         message: "Email Not Found SignUp First",
       });
     }
+    
+    const getHash = gethashedPass(Auth.salt, password);
+    if (Auth.password !== getHash) {
+      throw new CustomError("Invalid password", 401);
+    }
+
     console.log(Auth.id);
     if (!Auth.is_profile_completed) {
       const profileId = Auth.id;
@@ -373,11 +381,6 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
         message: "Profile not Found Create Profile First",
       });
     }
-    const getHash = gethashedPass(Auth.salt, password);
-    if (Auth.password !== getHash) {
-      throw new CustomError("Invalid password", 401);
-    }
-
     const fullUser = await AuthService.getFullAuthByIdAndUserProfile(Auth.id);
     if (!fullUser) {
       throw new CustomError("error getting full user", 401);
@@ -412,6 +415,52 @@ export const user_login = async (req: FastifyRequest, reply: FastifyReply) => {
       status: 200,
       data: fullUser,
       message: "User Logged In Successfully",
+    });
+  } catch (error: any) {
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
+  }
+};
+export const check_username = async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    let { user_name } = req.body as {
+      user_name:string
+    };
+    const checkUserName = await AuthService.checkExistingUserName(user_name);
+    let bool = checkUserName ? true : false;
+    // const mydeviceToken = fullUser.user_profile.device.find(
+    //   (d: any) => d.deviceToken === deviceToken
+    // );
+    // if (mydeviceToken) {
+    //   if (!mydeviceToken.isLoggedIn)
+    //     await DeviceService.newLogIn(mydeviceToken.id);
+    // }
+    // if (!mydeviceToken) {
+    //   await DeviceService.updateUserDeviceToken(
+    //     profileId,
+    //     deviceToken,
+    //     deviceType
+    //   );
+    // }
+    // console.log(fullUser);
+    return reply.status(200).send({
+      status: 200,
+      data: {
+        user_name,
+        exists: bool
+      },
+      message: "Username Checked Successfully",
     });
   } catch (error: any) {
     if (error instanceof CustomError) {
@@ -688,6 +737,7 @@ export const github_login = async (
 ) => {
   try {
     const redirectUrl = GithubService.generateRedirectUrl();
+    console.log("asking redirect",redirectUrl)
     reply.redirect(redirectUrl);
   } catch (error: any) {
     if (error instanceof CustomError) {
@@ -712,14 +762,27 @@ export const github_callback = async (
 ) => {
   try {
     const code = req.query.code;
-    
+    console.log("in callback",code)
     const getAccessToken = await GithubService.generateAccessToken(code);
     const getGithubDetails = await GithubService.InitilizeOctoKit(
       getAccessToken
     );
+    if(!getGithubDetails){
+      reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/`);
+    }
     // Save the github details in a .txt file
-  
-    reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+    const getDetails = await AuthService.getUserByGitCode(getGithubDetails.user.id)
+    console.log(getDetails)
+    if(getDetails && getDetails.user_profile && getDetails.user_profile.id){
+      const data=await GithubService.connectGitUserToProfile(getDetails.user_profile.id,getGithubDetails.user.id);
+      if(getDetails.is_profile_completed){
+        reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/dashboard/projects`);
+      }else{
+        reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+      }
+    }else{
+      reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+    }  
     // return reply.status(200).send({
     //   status: 200,
     //   getGithubDetails,
@@ -741,14 +804,61 @@ export const github_callback = async (
     }
   }
 };
+export const github_refetch = async (
+  req: FastifyRequest<{ Querystring: GithubCallbackQuery }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { authId, profileId } = req.user as {
+      authId: string;
+      profileId: string;
+    };
+    const redirectUrl = GithubService.generateRedirectUrl();
+    const user = await AuthService.getFullAuthByIdAndUserProfile(authId)
+    const gitUserId = user?.user_profile?.git_user?.id
+    if(!gitUserId || !user?.user_profile?.id){
+      throw new CustomError("Git Not Logged In",400)
+    }
+    console.log(gitUserId)
+    const getAccessToken = await GithubService.generateAccessToken(gitUserId.toString());
+    console.log(getAccessToken)
+    const getGithubDetails = await GithubService.InitilizeOctoKit(
+      getAccessToken
+    );
+    const data=await GithubService.connectGitUserToProfile(user?.user_profile?.id,gitUserId);
+    // Save the github details in a .txt file
+  
+    return reply.status(200).send({
+      status: 200,
+      getGithubDetails,
+      message: "Github Details Refetced Successfully",
+    });
+  } catch (error: any) {
+    if (error instanceof CustomError) {
+      // Handle specific CustomError instances
+      return reply.status(error.status).send({
+        message: error.message,
+        status: error.status,
+      });
+    } else {
+      console.log(error);
+      return reply.status(500).send({
+        message: error.message,
+        status: 500,
+      });
+    }
+  }
+};
 export const save_github_data = async (
   req: FastifyRequest,
   reply: FastifyReply
 ) => {
   try {
-    const { profileId } = req.user as { profileId: string };
+    const { email } = req.user as { email: string };
+    const auth = await AuthService.getFullAuthByEmail(email);
+    if(!auth?.user_profile?.id) throw new CustomError("User Profile Not Found", 404);
      const { github_user_id } = req.body as { github_user_id: number };
-    const data=await GithubService.connectGitUserToProfile(profileId,github_user_id);
+    const data=await GithubService.connectGitUserToProfile(auth?.user_profile?.id,github_user_id);
     return reply.status(200).send({
       status: 200,
       data,

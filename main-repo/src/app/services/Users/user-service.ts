@@ -1,3 +1,4 @@
+import validatedEnv from "../../../config/environmentVariables";
 import { prismaClient } from "../../../lib/db";
 import redis from "../../../lib/redis";
 import { gethashedPass } from "../../../utils/generate-hash";
@@ -15,6 +16,14 @@ export default class UserService {
   //   })
   // }
 
+  public static async createProfileOnly(auth_id:string){
+    return prismaClient.userProfile.create({
+      data:{
+        auth_id
+      }
+    })
+  }
+
   public static async createUserProfile(
     auth_id: string,
     full_name: string,
@@ -25,26 +34,45 @@ export default class UserService {
     longitude: number,
     latitude: number,
     location_name: string,
-    experience: {
+    mediaUrl: string,
+    filename: string,
+    experience?: {
       company: string;
       position: string;
       startDate: string;
       endDate: string;
       description?: string | null;
     }[],
-    education: {
+    education?: {
       institution: string;
       degree: string;
       startDate: string;
       endDate: string;
     }[],
-    mediaUrl: string,
-    filename: string
   ) {
     try {
-      const userProfile = await prismaClient.userProfile.create({
-        data: {
+      user_name=user_name.toLowerCase()
+      // First, upsert all skills and get their IDs
+      const skillIds: string[] = [];
+      for (const skillName of skills) {
+        // Try to find the skill by name
+        let skill = await prismaClient.skills.findUnique({
+          where: { name: skillName },
+        });
+        if (!skill) {
+          skill = await prismaClient.skills.create({
+            data: { name: skillName },
+          });
+        }
+        skillIds.push(skill.id);
+      }
+
+      // Now, create the user profile and connect the skills by ID
+      const userProfile = await prismaClient.userProfile.update({
+        where: {
           auth_id,
+        },
+        data: {
           user_name,
           professional_title,
           longitude,
@@ -59,14 +87,14 @@ export default class UserService {
             },
           },
           skills: {
-            create: skills.map((id) => ({
+            create: skillIds.map((id) => ({
               skill: {
                 connect: { id },
               },
             })),
           },
           experience: {
-            create: experience.map((exp) => ({
+            create: experience?.map((exp) => ({
               company: exp.company,
               position: exp.position,
               start_date: exp.startDate,
@@ -75,7 +103,7 @@ export default class UserService {
             })),
           },
           education: {
-            create: education.map((edu) => ({
+            create: education?.map((edu) => ({
               institution: edu.institution,
               degree: edu.degree,
               start_date: edu.startDate,
@@ -184,6 +212,9 @@ export default class UserService {
     filename?: string
   ) {
     try {
+      if(user_name){
+        user_name=user_name.toLowerCase()
+      }
       // Get existing profile to preserve unchanged values
       const existingProfile = await prismaClient.userProfile.findUnique({
         where: { id: profileId },
@@ -227,17 +258,31 @@ export default class UserService {
       }
 
       // Handle skills update if provided
+      // Yes, this is correct. The code deletes all existing userSkill entries for the user,
+      // then ensures all provided skills exist in the skills table (creating them if needed),
+      // collects their IDs, and then creates new userSkill entries connecting the user to those skills.
       if (skills && skills.length > 0) {
+        const skillIds: string[] = [];
         // Delete existing skills
         await prismaClient.userSkill.deleteMany({
           where: { user_id: profileId }
         });
-        
-        // Create new skills
+        for (const skillName of skills) {
+          // Try to find the skill by name
+          let skill = await prismaClient.skills.findUnique({
+            where: { name: skillName },
+          });
+          if (!skill) {
+            skill = await prismaClient.skills.create({
+              data: { name: skillName },
+            });
+          }
+          skillIds.push(skill.id);
+        }
         updateData.skills = {
-          create: skills.map((skillId) => ({
+          create: skillIds.map((id) => ({
             skill: {
-              connect: { id: skillId },
+              connect: { id },
             },
           })),
         };
@@ -355,6 +400,7 @@ export default class UserService {
 
   public static async searchUsersByUsername(username: string) {
     try {
+      username=username.toLowerCase()
       const users = await prismaClient.userProfile.findMany({
         where: {
           user_name: {
@@ -397,6 +443,7 @@ export default class UserService {
         latitude,
         radius
       );
+      console.log(nearbyLocations)
 
       if (!nearbyLocations || nearbyLocations.length === 0) {
         return [];
@@ -445,6 +492,9 @@ export default class UserService {
     radius?: number
   ) {
     try {
+      if(username){
+        username=username.toLowerCase()
+      }
       let users: any[] = [];
 
       // Search by skills

@@ -9,14 +9,27 @@ class ReviewService {
     try {
       const reviews = await prisma.reviews.findMany({
         where: {
-          user_profile_id: profileId
+          review_for_id: profileId
         },
         include: {
+          review_for: {
+            select: {
+              full_name: true,
+              professional_title: true,
+              avatar: true,
+              about:true,
+              education:true,
+              location_name:true,
+            }
+          },
           user_profile: {
             select: {
               full_name: true,
               professional_title: true,
-              avatar: true
+              avatar: true,
+              about:true,
+              education:true,
+              location_name:true,
             }
           },
           images: true
@@ -26,10 +39,16 @@ class ReviewService {
         }
       });
 
-      const total = await prisma.reviews.count({
-        where: {
-          user_profile_id: profileId
-        }
+      const total = await prisma.reviews.aggregate({
+      where: {
+        review_for_id: profileId
+      },
+      _count: {
+        id: true
+      },
+      _avg: {
+        rating: true
+      }
       });
 
       return {
@@ -45,29 +64,22 @@ class ReviewService {
   public static async createReview(userId: string, profileId: string, review: string, rating: number) {
     try {
       // Check if user has already reviewed this profile
-      const existingReview = await prisma.reviews.findFirst({
-        where: {
-          user_profile_id: userId,
-          review_for_id: profileId
-        }
-      });
-
-      if (existingReview) {
-        throw new CustomError("You have already reviewed this profile", 400);
-      }
+     
 
       const newReview = await prisma.reviews.create({
         data: {
           review,
           rating,
           user_profile_id: userId,
+          review_for_id:profileId
         },
         include: {
           user_profile: {
             select: {
               full_name: true,
               professional_title: true,
-              avatar: true
+              avatar: true,
+              about:true
             }
           }
         }
@@ -94,32 +106,45 @@ class ReviewService {
             select: {
               full_name: true,
               professional_title: true,
-              avatar: true
+              avatar: true,
+              about:true,
+              education:true,
+              location_name:true,
+            }
+          },
+          review_for: {
+            select: {
+              full_name: true,
+              professional_title: true,
+              avatar: true,
+              about:true,
+              education:true,
+              location_name:true,
             }
           },
           images: true
         },
-        skip: (page - 1) * limit,
-        take: limit,
         orderBy: {
           createdAt: 'desc'
         }
       });
 
-      const total = await prisma.reviews.count({
+      const total = await prisma.reviews.aggregate({
         where: {
           user_profile_id: userId
+        },
+        _count: {
+          id: true
+        },
+        _avg: {
+          rating: true
         }
-      });
+        });
+  
 
       return {
         reviews,
-        pagination: {
-          total,
-          page,
-          limit,
-          pages: Math.ceil(total / limit)
-        }
+       total
       };
     } catch (error) {
       throw new CustomError("Failed to fetch user reviews", 400);
@@ -157,6 +182,14 @@ class ReviewService {
       throw new CustomError("Failed to delete review", 400);
     }
   }
+  public static async findExisting(userId: string,profileId:string) {
+    return await prisma.reviews.findFirst({
+      where: {
+        user_profile_id: userId,
+        review_for_id: profileId
+      }
+    });
+}
 }
 
 export default ReviewService

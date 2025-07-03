@@ -39,7 +39,7 @@ export const avatar_multipart = multer({
     console.log(file);
     // const FileTypes = /jpeg|jpg|png|gif|jfif|mp4|mov|avi|3gp|pdf|hevc/;
     const FileTypes =
-      /jpeg|jpg|png|gif|jfif|mp4|mov|avi|3gp|pdf|hevcpdf|hevc|application|octet-stream/;
+      /jpeg|jpg|png|gif|jfif|bmp|webp|tiff|tif|svg|ico|heic|heif|raw|indd|ai|eps|mp4|mov|avi|3gp|pdf|hevcpdf|hevc|application|octet-stream/;
     const mimeType = FileTypes.test(file.mimetype);
     const extname = FileTypes.test(
       path.extname(file.originalname.toLowerCase())

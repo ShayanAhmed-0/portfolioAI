@@ -38,19 +38,10 @@ export const search_portfolios = async (
       radius?: string;
     };
 
-    // Parse skills array if provided
+    // Parse skills array if provided - now handling skill IDs directly
     let skillIds: string[] | undefined;
     if (skills) {
-      const skillNames = skills.split(',').map(s => s.trim());
-      // Query skills by name using Prisma
-      const matchingSkills = await prismaClient.skills.findMany({
-        where: {
-          name: {
-            in: skillNames
-          }
-        }
-      });
-      skillIds = matchingSkills.map(skill => skill.id);
+      skillIds = skills.split(',').map(s => s.trim());
     }
     
     // Parse coordinates if provided

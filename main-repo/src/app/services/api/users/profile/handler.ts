@@ -150,20 +150,7 @@ export const update_user_profile = async (
     let mediaUrl = null;
     let filename = null;
     
-    if (file) {
-      let { filename: fileFilename } = file as unknown as { filename: any };
-      if (!fileFilename) {
-        throw new CustomError("User Avatar is Required", 400);
-      }
-      filename = fileFilename;
-      mediaUrl = `/avatar/${filename}`;
-      
-      if(parsedBody.isVectorized){
-        const vectorized = await MediaService.VectorizeAvatar(file)
-        mediaUrl = vectorized.fileUrl
-        filename = vectorized.filename
-      }
-    }
+   
 
     const {
       username,
@@ -188,12 +175,33 @@ export const update_user_profile = async (
     }
     
     if (existingProfile.user_profile.user_name !== username) {
+    
       const checkUserName = await AuthService.checkExistingUserName(username);
       if (checkUserName) {
+        console.log(checkUserName)
         throw new CustomError("Username Already Exists", 409);
       }
     }
 
+     if (file) {
+      let { filename: fileFilename } = file as unknown as { filename: any };
+      if (!fileFilename) {
+        filename=existingProfile.user_profile.avatar?.name
+        mediaUrl=existingProfile.user_profile.avatar?.url
+      }else{
+        filename = fileFilename;
+        mediaUrl = `/avatar/${filename}`;
+        
+        if(parsedBody.isVectorized){
+          const vectorized = await MediaService.VectorizeAvatar(file)
+          mediaUrl = vectorized.fileUrl
+          filename = vectorized.filename
+        }
+      }
+    }else{
+      filename=existingProfile.user_profile.avatar?.name
+        mediaUrl=existingProfile.user_profile.avatar?.url
+    }
     // Prepare update data with only provided values
     const updateData: any = {};
     if (firstName && lastName) updateData.full_name = `${firstName} ${lastName}`;
@@ -227,6 +235,8 @@ export const update_user_profile = async (
     
     if (!updateUserProfile)
       throw new CustomError("error updating profile", 400);
+ 
+
 
     const fullUser = await AuthService.getFullAuthByIdAndUserProfile(authId);
     if (!fullUser) {

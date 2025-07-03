@@ -52,7 +52,7 @@ const user_profile = async (fastify: FastifyInstance) => {
   });
   fastify.route({
     method: "POST",
-    url: "/chage-status",
+    url: "/change-status",
     schema: {
       headers: authheaders,
       response: {
@@ -133,6 +133,7 @@ const user_profile = async (fastify: FastifyInstance) => {
       headers: authheaders,
     
     },
+    preHandler: avatar_multipart.single("avatar"),
     handler: update_user_profile,
     preValidation: user_bearer,
     errorHandler: (

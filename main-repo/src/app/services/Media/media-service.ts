@@ -26,7 +26,7 @@ export default class MediaService {
       data: { url, name, user_profile_id },
     });
   }
-  public static async VectorizeAvatar(file: any) {
+  public static async VectorizeAvatar(file: any,isCreateProfile:boolean=false) {
     const inputPath = file.path;
 
     const buffer = await sharp(inputPath)
@@ -50,7 +50,7 @@ export default class MediaService {
     const outputDir = path.join(
       process.cwd(),
       "../public/uploads",
-      "vectorized"
+      isCreateProfile ? "avatar" : "vectorized"
     );
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });

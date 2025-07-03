@@ -34,7 +34,7 @@ import { getlovs } from "./handler";
       url: "/all-lovs",
       schema: { 
       },
-      preValidation: user_bearer,
+      // preValidation: user_bearer,
       handler: getlovs,
       errorHandler: (
         error: FastifyError,

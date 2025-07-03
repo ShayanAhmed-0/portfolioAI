@@ -83,7 +83,7 @@ import { chat_multipart } from "../../../middlewares/multipart/chat-multipart";
       },
     });
     fastify.route({
-      method: "POST",
+      method: "GET",
       url: "/chat-messages/:chatId",
       schema: { 
       },

@@ -50,7 +50,7 @@ import { create_review, get_reviews } from "./handler";
       url: "/get-reviews/:profileId",
       schema: { 
       },
-      preValidation: user_bearer,
+      // preValidation: user_bearer,
       handler: get_reviews,
       errorHandler: (
         error: FastifyError,

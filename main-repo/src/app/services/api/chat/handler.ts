@@ -34,24 +34,39 @@ export const sendMessage = async (req: FastifyRequest,
     reply: FastifyReply) => {
     try {
       const { chatId, content } = req.body as { chatId: string, content: string };
-      const files = (req as any).files as any[];
+      const { profileId } = req.user as { profileId: string };
+      // const files = (req as any).files as any[];
       
-      let mediaArray: { url: string; name: string }[] = [];
+      // let mediaArray: { url: string; name: string }[] = [];
 
-      if (files && files.length > 0) {
-        mediaArray = files.map(file => ({
-          url: `/chat-media/${file.filename}`,
-          name: file.filename
-        }));
-      }
+      // if (files && files.length > 0) {
+      //   mediaArray = files.map(file => ({
+      //     url: `/chat-media/${file.filename}`,
+      //     name: file.filename
+      //   }));
+      // }
     
-      const senderId = req.user.id;
+      // const senderId = req.user.id;
       const message = await ChatService.sendMessage(
         chatId, 
-        senderId, 
+        profileId, 
         content, 
-        mediaArray
+        // mediaArray
       );
+// console.log((ChatService as any).io);
+      // Emit the message to all users in the chat room via socket
+      if ((ChatService as any).io) {
+        // Log all socket IDs in the room before emitting
+        const room = (ChatService as any).io.sockets.adapter.rooms.get(chatId);
+        if (room) {
+          const socketIds = Array.from(room);
+          console.log(`Emitting 'new_message' to chat ${chatId} sockets:`, socketIds);
+        } else {
+          console.log(`No sockets found in chat room ${chatId} when emitting 'new_message'`);
+        }
+        (ChatService as any).io.to(chatId).emit('new_message', message);
+        console.log(`Emitted new_message to chat ${chatId}`);
+      }
 
       return reply.status(200).send({
         data: { message },
@@ -109,8 +124,9 @@ export const getChatMessages = async (req: FastifyRequest,
 export const getUserChats = async (req: FastifyRequest,
     reply: FastifyReply) => {
     try {
-      const userId = req.user.id; // Assuming you have user info in request
-      const chats = await ChatService.getUserChats(userId);
+      const {profileId} = req.user; // Assuming you have user info in request
+      console.log(profileId)
+      const chats = await ChatService.getUserChats(profileId);
       return reply.status(200).send({
         data:{chats},
         status: 200,
