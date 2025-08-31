@@ -768,7 +768,7 @@ export const github_callback = async (
       getAccessToken
     );
     if(!getGithubDetails){
-      reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/`);
+      reply.redirect(`https://2qx8mml7-3001.asse.devtunnels.ms/`);
     }
     // Save the github details in a .txt file
     const getDetails = await AuthService.getUserByGitCode(getGithubDetails.user.id)
@@ -776,12 +776,12 @@ export const github_callback = async (
     if(getDetails && getDetails.user_profile && getDetails.user_profile.id){
       const data=await GithubService.connectGitUserToProfile(getDetails.user_profile.id,getGithubDetails.user.id);
       if(getDetails.is_profile_completed){
-        reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/dashboard/projects`);
+        reply.redirect(`https://2qx8mml7-3001.asse.devtunnels.ms/dashboard/projects`);
       }else{
-        reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+        reply.redirect(`https://2qx8mml7-3001.asse.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
       }
     }else{
-      reply.redirect(`https://4s6474rq-3000.inc1.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
+      reply.redirect(`https://2qx8mml7-3001.asse.devtunnels.ms/create-profile?gitUserId=${getGithubDetails.user.id}`);
     }  
     // return reply.status(200).send({
     //   status: 200,
